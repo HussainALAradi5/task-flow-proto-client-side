@@ -1,63 +1,87 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
-import { GenericInputComponent } from '../../../../shared/components/generic-input/generic-input.component';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
 
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [RouterLink, GenericInputComponent, GenericButtonComponent],
+  imports: [RouterLink, FormsModule, GenericButtonComponent],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-md w-full space-y-8">
-        <div>
-          <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
-        </div>
-        <form class="mt-8 space-y-6" (submit)="onSubmit($event)">
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
+      <div class="w-full max-w-md">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+          <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Create account</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Start managing your tasks</p>
+          </div>
+
           @if (error()) {
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
               {{ error() }}
             </div>
           }
-          <div class="rounded-md shadow-sm space-y-4">
-            <app-generic-input
-              id="userName"
-              label="Username"
-              placeholder="Enter your username"
-              [required]="true"
-            />
-            <app-generic-input
-              id="email"
-              label="Email address"
-              type="email"
-              placeholder="Enter your email"
-              [required]="true"
-            />
-            <app-generic-input
-              id="password"
-              label="Password"
-              type="password"
-              placeholder="Enter your password"
-              [required]="true"
-            />
-            <app-generic-input
-              id="mobileNumber"
-              label="Mobile Number"
-              placeholder="Enter your mobile number"
-            />
-          </div>
-          <div>
+
+          <form (submit)="onSubmit($event)" class="space-y-5">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+              <input
+                type="text"
+                [(ngModel)]="userName"
+                name="userName"
+                required
+                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="johndoe"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+              <input
+                type="email"
+                [(ngModel)]="email"
+                name="email"
+                required
+                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+              <input
+                type="password"
+                [(ngModel)]="password"
+                name="password"
+                required
+                minlength="6"
+                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="Min 6 characters"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mobile Number</label>
+              <input
+                type="tel"
+                [(ngModel)]="mobileNumber"
+                name="mobileNumber"
+                class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="+1234567890"
+              />
+            </div>
+
             <app-generic-button type="submit" [loading]="loading()">
-              Sign up
+              Create Account
             </app-generic-button>
-          </div>
-          <div class="text-center">
-            <a routerLink="/auth/login" class="text-blue-600 hover:text-blue-800">
-              Already have an account? Sign in
-            </a>
-          </div>
-        </form>
+          </form>
+
+          <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            Already have an account?
+            <a routerLink="/auth/login" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Sign in</a>
+          </p>
+        </div>
       </div>
     </div>
   `,
@@ -66,24 +90,20 @@ export class SignupComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  userName = '';
+  email = '';
+  password = '';
+  mobileNumber = '';
   loading = signal(false);
   error = signal<string | null>(null);
 
   onSubmit(event: Event): void {
     event.preventDefault();
-    const form = event.target as HTMLFormElement;
-    const userName = (form.querySelector('#userName') as HTMLInputElement).value;
-    const email = (form.querySelector('#email') as HTMLInputElement).value;
-    const password = (form.querySelector('#password') as HTMLInputElement).value;
-    const mobileNumber = (form.querySelector('#mobileNumber') as HTMLInputElement).value;
-
     this.loading.set(true);
     this.error.set(null);
 
-    this.authService.signup({ userName, email, password, mobileNumber }).subscribe({
-      next: () => {
-        this.router.navigate(['/board']);
-      },
+    this.authService.signup({ userName: this.userName, email: this.email, password: this.password, mobileNumber: this.mobileNumber }).subscribe({
+      next: () => this.router.navigate(['/board']),
       error: (err) => {
         this.error.set(err.error?.message || 'Signup failed');
         this.loading.set(false);
