@@ -13,6 +13,8 @@ export class AuthService {
   private currentUserSignal = signal<User | null>(null);
   readonly currentUser = this.currentUserSignal.asReadonly();
   readonly isLoggedIn = computed(() => !!this.currentUserSignal());
+  readonly isAdmin = computed(() => this.currentUserSignal()?.role === 'Admin');
+  readonly isLeader = computed(() => this.currentUserSignal()?.role === 'Leader');
 
   constructor(private http: HttpClient, private router: Router) {
     this.loadUser();
@@ -20,17 +22,13 @@ export class AuthService {
 
   signup(data: SignupRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/signup`, data).pipe(
-      tap((res) => {
-        this.setSession(res.token, res.data);
-      }),
+      tap((res) => this.setSession(res.token, res.data)),
     );
   }
 
   login(data: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, data).pipe(
-      tap((res) => {
-        this.setSession(res.token, res.data);
-      }),
+      tap((res) => this.setSession(res.token, res.data)),
     );
   }
 
@@ -64,7 +62,12 @@ export class AuthService {
   private loadUser(): void {
     const token = this.getToken();
     if (token) {
-      this.getProfile().subscribe();
+      this.getProfile().subscribe({
+        error: () => {
+          localStorage.removeItem(this.tokenKey);
+          this.currentUserSignal.set(null);
+        },
+      });
     }
   }
 }
