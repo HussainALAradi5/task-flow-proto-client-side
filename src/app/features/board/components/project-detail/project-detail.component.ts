@@ -68,6 +68,7 @@ export class ProjectDetailComponent implements OnInit {
   editingTask = signal<Task | null>(null);
   editingMilestone = signal<Milestone | null>(null);
   draggedTask = signal<Task | null>(null);
+  taskSearch = '';
 
   taskForm: TaskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '' };
   milestoneForm = { name: '' };
@@ -105,7 +106,10 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   getByStatus(status: TaskStatus): Task[] {
-    return this.tasks().filter((t) => t.status === status);
+    const tasks = this.taskSearch
+      ? this.tasks().filter((t) => t.title.toLowerCase().includes(this.taskSearch.toLowerCase()))
+      : this.tasks();
+    return tasks.filter((t) => t.status === status);
   }
 
   getCount(status: TaskStatus): number {

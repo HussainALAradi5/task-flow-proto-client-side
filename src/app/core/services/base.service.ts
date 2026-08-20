@@ -12,10 +12,13 @@ export class BaseService {
   protected toast = inject(ToastService);
   protected baseUrl = environment.apiUrl;
 
-  getAll<T>(endpoint: string, params?: PaginationParams): Observable<PaginatedResult<T>> {
+  getAll<T>(endpoint: string, params?: PaginationParams, search?: string): Observable<PaginatedResult<T>> {
     let httpParams = new HttpParams();
     if (params) {
       httpParams = httpParams.set('page', params.page.toString()).set('limit', params.limit.toString());
+    }
+    if (search) {
+      httpParams = httpParams.set('search', search);
     }
     return this.http.get<PaginatedResult<T>>(`${this.baseUrl}/${endpoint}`, { params: httpParams });
   }
@@ -28,7 +31,7 @@ export class BaseService {
     return this.http.post<ApiResponse<T>>(`${this.baseUrl}/${endpoint}`, data).pipe(
       tap({
         next: () => { if (successMsg) this.toast.success(successMsg); },
-        error: (err: any) => this.toast.error(err.error?.message || 'Operation failed'),
+        error: (err: { error?: { message?: string } }) => this.toast.error(err.error?.message || 'Operation failed'),
       }),
     );
   }
@@ -37,7 +40,7 @@ export class BaseService {
     return this.http.patch<ApiResponse<T>>(`${this.baseUrl}/${endpoint}/${id}`, data).pipe(
       tap({
         next: () => { if (successMsg) this.toast.success(successMsg); },
-        error: (err: any) => this.toast.error(err.error?.message || 'Operation failed'),
+        error: (err: { error?: { message?: string } }) => this.toast.error(err.error?.message || 'Operation failed'),
       }),
     );
   }
@@ -46,7 +49,7 @@ export class BaseService {
     return this.http.delete<ApiResponse<T>>(`${this.baseUrl}/${endpoint}/${id}`).pipe(
       tap({
         next: () => { if (successMsg) this.toast.success(successMsg); },
-        error: (err: any) => this.toast.error(err.error?.message || 'Operation failed'),
+        error: (err: { error?: { message?: string } }) => this.toast.error(err.error?.message || 'Operation failed'),
       }),
     );
   }
