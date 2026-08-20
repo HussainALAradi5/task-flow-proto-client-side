@@ -18,9 +18,9 @@ export class ProfileComponent {
 
   getRoleBadge(role: string): 'success' | 'warning' | 'danger' | 'info' | 'purple' {
     const map: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'purple'> = {
-      Admin: 'purple', Leader: 'info', Member: 'default' as any,
+      Admin: 'purple', Leader: 'info', Member: 'success',
     };
-    return map[role] || 'default' as any;
+    return map[role] || 'info';
   }
 
   openEditDialog(): void {

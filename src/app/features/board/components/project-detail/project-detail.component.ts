@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -10,7 +10,6 @@ import { Project } from '../../../../core/interfaces/project.interface';
 import { Task } from '../../../../core/interfaces/task.interface';
 import { Milestone } from '../../../../core/interfaces/milestone.interface';
 import { Comment } from '../../../../core/interfaces/comment.interface';
-import { User } from '../../../../core/models/user.model';
 import { TaskStatus, TASK_STATUS_OPTIONS } from '../../../../core/enums/task-status.enum';
 import { TaskPriority, TASK_PRIORITY_OPTIONS } from '../../../../core/enums/task-priority.enum';
 import { SelectOption } from '../../../../shared/components/generic-select/generic-select.component';
@@ -31,6 +30,7 @@ interface TaskForm {
   startDate: string;
   targetDate: string;
   endDate: string;
+  deliveredDate: string;
 }
 
 @Component({
@@ -51,14 +51,13 @@ export class ProjectDetailComponent implements OnInit {
   milestones = signal<Milestone[]>([]);
   comments = signal<Comment[]>([]);
   selectedTask = signal<Task | null>(null);
-  users = signal<User[]>([]);
   projectId = '';
 
   columns = [
-    { status: TaskStatus.TODO, label: 'To Do', dotColor: 'bg-gray-400' },
-    { status: TaskStatus.IN_PROGRESS, label: 'In Progress', dotColor: 'bg-blue-500' },
-    { status: TaskStatus.IN_REVIEW, label: 'In Review', dotColor: 'bg-yellow-500' },
-    { status: TaskStatus.DONE, label: 'Done', dotColor: 'bg-green-500' },
+    { status: TaskStatus.TODO, label: 'To Do', dotColor: 'bg-gray-400', bg: 'bg-gray-50 dark:bg-gray-800/30', border: 'border-gray-200 dark:border-gray-700' },
+    { status: TaskStatus.IN_PROGRESS, label: 'In Progress', dotColor: 'bg-blue-500', bg: 'bg-blue-50/50 dark:bg-blue-900/10', border: 'border-blue-200 dark:border-blue-800' },
+    { status: TaskStatus.IN_REVIEW, label: 'In Review', dotColor: 'bg-amber-500', bg: 'bg-amber-50/50 dark:bg-amber-900/10', border: 'border-amber-200 dark:border-amber-800' },
+    { status: TaskStatus.DONE, label: 'Done', dotColor: 'bg-emerald-500', bg: 'bg-emerald-50/50 dark:bg-emerald-900/10', border: 'border-emerald-200 dark:border-emerald-800' },
   ];
 
   statusBadgeOptions: BadgeOption[] = TASK_STATUS_OPTIONS.map((o) => ({
@@ -89,8 +88,12 @@ export class ProjectDetailComponent implements OnInit {
   sortBy = signal<string>('newest');
   newComment = '';
 
-  taskForm: TaskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '', startDate: '', targetDate: '', endDate: '' };
+  taskForm: TaskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '', startDate: '', targetDate: '', endDate: '', deliveredDate: '' };
   milestoneForm = { name: '' };
+
+  totalTasks = computed(() => this.tasks().length);
+  completedTasks = computed(() => this.tasks().filter(t => t.status === TaskStatus.DONE).length);
+  progressPercent = computed(() => this.totalTasks() === 0 ? 0 : Math.round((this.completedTasks() / this.totalTasks()) * 100));
 
   ngOnInit(): void {
     const slug = this.route.snapshot.paramMap.get('projectSlug') || '';
@@ -106,7 +109,6 @@ export class ProjectDetailComponent implements OnInit {
           this.projectId = found._id;
           this.loadTasks();
           this.loadMilestones();
-          this.loadUsers();
         }
       },
     });
@@ -125,17 +127,38 @@ export class ProjectDetailComponent implements OnInit {
     });
   }
 
-  loadUsers(): void {
-    this.api.getAll<User>('users').subscribe({ next: (res) => this.users.set(res.data) });
-  }
-
   loadComments(taskId: string): void {
     this.api.getAll<Comment>(`comments/task/${taskId}`).subscribe({ next: (res) => this.comments.set(res.data) });
   }
 
-  getUserName(id?: string): string {
-    if (!id) return 'Unknown';
-    return this.users().find((u) => u._id === id)?.userName || 'Unknown';
+  getUserName(user?: string | Record<string, unknown>): string {
+    if (!user) return 'Unknown';
+    if (typeof user === 'string') return 'Unknown';
+    return (user['userName'] as string) || 'Unknown';
+  }
+
+  getMilestoneTaskCount(milestoneId: string): number {
+    return this.tasks().filter(t => t.milestoneId === milestoneId).length;
+  }
+
+  getMilestoneCompletedCount(milestoneId: string): number {
+    return this.tasks().filter(t => t.milestoneId === milestoneId && t.status === TaskStatus.DONE).length;
+  }
+
+  isOverdue(task: Task): boolean {
+    if (!task.targetDate || task.status === TaskStatus.DONE) return false;
+    return new Date(task.targetDate) < new Date();
+  }
+
+  getDaysUntilTarget(task: Task): number | null {
+    if (!task.targetDate) return null;
+    const diff = new Date(task.targetDate).getTime() - new Date().getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  }
+
+  getOverdueDays(task: Task): number {
+    const days = this.getDaysUntilTarget(task);
+    return days !== null ? Math.abs(days) : 0;
   }
 
   getByStatus(status: TaskStatus): Task[] {
@@ -185,25 +208,11 @@ export class ProjectDetailComponent implements OnInit {
     });
   }
 
-  onFilterStatus(value: string): void {
-    this.filterStatus.set(value);
-  }
-
-  onFilterPriority(value: string): void {
-    this.filterPriority.set(value);
-  }
-
-  onFilterDateFrom(value: string): void {
-    this.filterDateFrom.set(value);
-  }
-
-  onFilterDateTo(value: string): void {
-    this.filterDateTo.set(value);
-  }
-
-  onSortBy(value: string): void {
-    this.sortBy.set(value);
-  }
+  onFilterStatus(value: string): void { this.filterStatus.set(value); }
+  onFilterPriority(value: string): void { this.filterPriority.set(value); }
+  onFilterDateFrom(value: string): void { this.filterDateFrom.set(value); }
+  onFilterDateTo(value: string): void { this.filterDateTo.set(value); }
+  onSortBy(value: string): void { this.sortBy.set(value); }
 
   clearFilters(): void {
     this.taskSearch = '';
@@ -234,9 +243,7 @@ export class ProjectDetailComponent implements OnInit {
     return map[p];
   }
 
-  onSearchTasks(query: string): void {
-    this.taskSearch = query;
-  }
+  onSearchTasks(query: string): void { this.taskSearch = query; }
 
   onDragStart(event: DragEvent, task: Task): void {
     this.draggedTask.set(task);
@@ -266,7 +273,7 @@ export class ProjectDetailComponent implements OnInit {
 
   openCreateTask(): void {
     this.editingTask.set(null);
-    this.taskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '', startDate: '', targetDate: '', endDate: '' };
+    this.taskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '', startDate: '', targetDate: '', endDate: '', deliveredDate: '' };
     this.showTaskDialog.set(true);
   }
 
@@ -281,6 +288,7 @@ export class ProjectDetailComponent implements OnInit {
       startDate: task.startDate ? task.startDate.split('T')[0] : '',
       targetDate: task.targetDate ? task.targetDate.split('T')[0] : '',
       endDate: task.endDate ? task.endDate.split('T')[0] : '',
+      deliveredDate: task.deliveredDate ? task.deliveredDate.split('T')[0] : '',
     };
     this.showTaskDialog.set(true);
   }
@@ -294,6 +302,7 @@ export class ProjectDetailComponent implements OnInit {
       startDate: this.taskForm.startDate || null,
       targetDate: this.taskForm.targetDate || null,
       endDate: this.taskForm.endDate || null,
+      deliveredDate: this.taskForm.deliveredDate || null,
     };
     const obs = this.editingTask()
       ? this.api.update('tasks', this.editingTask()!._id, data, 'Task updated')

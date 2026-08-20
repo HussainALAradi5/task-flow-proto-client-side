@@ -4,6 +4,7 @@ import { DatePipe } from '@angular/common';
 import { ApiService } from '../../../../core/services/api.service';
 import { AlertService } from '../../../../core/services/alert.service';
 import { Team } from '../../../../core/models/team.model';
+import { PaginationMeta } from '../../../../core/interfaces/base.interface';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
 import { GenericDialogComponent } from '../../../../shared/components/generic-dialog/generic-dialog.component';
 import { GenericPaginationComponent } from '../../../../shared/components/generic-pagination/generic-pagination.component';
@@ -109,7 +110,7 @@ export class TeamComponent implements OnInit {
   private alert = inject(AlertService);
 
   teams = signal<Team[]>([]);
-  pagination = signal<any>(null);
+  pagination = signal<PaginationMeta | null>(null);
   loading = signal(true);
   showDialog = signal(false);
   editingTeam = signal<Team | null>(null);

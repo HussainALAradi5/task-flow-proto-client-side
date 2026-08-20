@@ -1,109 +1,235 @@
-<div class="p-6 max-w-full mx-auto">
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-    <div>
-      <a routerLink="/board" class="text-sm text-blue-600 hover:underline mb-1 inline-block">&larr; Back to Projects</a>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ project()?.title || 'Project' }}</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-1">{{ project()?.description }}</p>
-    </div>
-    <div class="flex gap-2">
-      <app-generic-button variant="outline" (onClick)="showMilestoneDialog.set(true)">+ Milestone</app-generic-button>
-      <app-generic-button (onClick)="openCreateTask()">+ Task</app-generic-button>
-    </div>
-  </div>
-
-  <!-- Filters -->
-  <div class="flex flex-wrap items-end gap-4 mb-6">
-    <div class="max-w-xs">
-      <app-generic-search placeholder="Search tasks..." (search)="onSearchTasks($event)" />
-    </div>
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">Status</label>
-      <select (change)="onFilterStatus($any($event.target).value)" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option value="">All Status</option>
-        @for (col of columns; track col.status) {
-          <option [value]="col.status">{{ col.label }}</option>
-        }
-      </select>
-    </div>
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">Priority</label>
-      <select (change)="onFilterPriority($any($event.target).value)" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option value="">All Priority</option>
-        <option value="Low">Low</option>
-        <option value="Medium">Medium</option>
-        <option value="High">High</option>
-        <option value="Critical">Critical</option>
-      </select>
-    </div>
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">Target From</label>
-      <input type="date" (change)="onFilterDateFrom($any($event.target).value)" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
-    </div>
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">Target To</label>
-      <input type="date" (change)="onFilterDateTo($any($event.target).value)" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
-    </div>
-    <div>
-      <label class="block text-xs text-gray-500 mb-1">Sort By</label>
-      <select (change)="onSortBy($any($event.target).value)" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option value="newest">Newest First</option>
-        <option value="oldest">Oldest First</option>
-        <option value="target-asc">Target Date ↑</option>
-        <option value="target-desc">Target Date ↓</option>
-        <option value="priority">Priority</option>
-      </select>
-    </div>
-    @if (hasActiveFilters()) {
-      <button (click)="clearFilters()" class="text-sm text-blue-600 hover:underline">Clear filters</button>
-    }
-  </div>
-
-  <!-- Kanban Board -->
-  <div class="flex gap-4 overflow-x-auto pb-4">
-    @for (col of columns; track col.status) {
-      <div class="flex-shrink-0 w-80 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 min-h-[300px]"
-        (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event, col.status)">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full" [class]="col.dotColor"></span>
-            <h3 class="font-semibold text-gray-700 dark:text-gray-300 text-sm">{{ col.label }}</h3>
-          </div>
-          <span class="text-xs text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">{{ getCount(col.status) }}</span>
+<!-- Header -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+  <div class="max-w-[1600px] mx-auto px-6 py-8">
+    <!-- Project Header -->
+    <div class="mb-8">
+      <a routerLink="/board" class="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mb-4 transition-colors group">
+        <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to Projects
+      </a>
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{{ project()?.title || 'Project' }}</h1>
+          @if (project()?.description) {
+            <p class="text-gray-500 dark:text-gray-400 mt-1.5">{{ project()?.description }}</p>
+          }
         </div>
-        <div class="space-y-3">
-          @for (task of getByStatus(col.status); track task._id) {
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 cursor-grab hover:shadow-md transition-shadow"
-              draggable="true" (dragstart)="onDragStart($event, task)" (click)="openEditTask(task)">
-              <div class="flex items-start justify-between mb-2">
-                <h4 class="font-medium text-gray-900 dark:text-white text-sm">{{ task.title }}</h4>
-                <div class="flex gap-1">
-                  <button (click)="openComments(task); $event.stopPropagation()" class="text-gray-400 hover:text-blue-500" title="Comments">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                  </button>
-                  <button (click)="confirmDeleteTask(task); $event.stopPropagation()" class="text-gray-400 hover:text-red-500">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                  </button>
+        <div class="flex gap-3">
+          <app-generic-button variant="outline" (onClick)="showMilestoneDialog.set(true)">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            Milestone
+          </app-generic-button>
+          <app-generic-button (onClick)="openCreateTask()">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Task
+          </app-generic-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+        <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Tasks</div>
+        <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalTasks() }}</div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+        <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Completed</div>
+        <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ completedTasks() }}</div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+        <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Milestones</div>
+        <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ milestones().length }}</div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+        <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Progress</div>
+        <div class="flex items-center gap-3">
+          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ progressPercent() }}%</div>
+          <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500" [style.width.%]="progressPercent()"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 mb-6 shadow-sm">
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="flex-1 min-w-[200px]">
+          <app-generic-search placeholder="Search tasks..." (search)="onSearchTasks($event)" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Status</label>
+          <select (change)="onFilterStatus($any($event.target).value)" class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+            <option value="">All</option>
+            @for (col of columns; track col.status) {
+              <option [value]="col.status">{{ col.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Priority</label>
+          <select (change)="onFilterPriority($any($event.target).value)" class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+            <option value="">All</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">From</label>
+          <input type="date" (change)="onFilterDateFrom($any($event.target).value)" class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">To</label>
+          <input type="date" (change)="onFilterDateTo($any($event.target).value)" class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">Sort</label>
+          <select (change)="onSortBy($any($event.target).value)" class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="target-asc">Due ↑</option>
+            <option value="target-desc">Due ↓</option>
+            <option value="priority">Priority</option>
+          </select>
+        </div>
+        @if (hasActiveFilters()) {
+          <button (click)="clearFilters()" class="px-3 py-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors font-medium">
+            Clear
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="flex gap-5 overflow-x-auto pb-6 -mx-2 px-2">
+      @for (col of columns; track col.status) {
+        <div class="flex-shrink-0 w-[320px] rounded-2xl border {{ col.border }} {{ col.bg }} p-4 min-h-[400px] transition-colors"
+          (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event, col.status)">
+          <!-- Column Header -->
+          <div class="flex items-center justify-between mb-4 px-1">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full {{ col.dotColor }}"></span>
+              <h3 class="font-semibold text-gray-700 dark:text-gray-300 text-sm">{{ col.label }}</h3>
+            </div>
+            <span class="text-xs font-medium text-gray-400 bg-white dark:bg-gray-800 px-2.5 py-1 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">{{ getCount(col.status) }}</span>
+          </div>
+          <!-- Task Cards -->
+          <div class="space-y-3">
+            @for (task of getByStatus(col.status); track task._id) {
+              <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 cursor-grab hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-900/50 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 group"
+                draggable="true" (dragstart)="onDragStart($event, task)" (click)="openEditTask(task)">
+                <!-- Title + Actions -->
+                <div class="flex items-start justify-between mb-2.5">
+                  <h4 class="font-semibold text-gray-900 dark:text-white text-sm leading-snug pr-2">{{ task.title }}</h4>
+                  <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button (click)="openComments(task); $event.stopPropagation()" class="p-1 text-gray-400 hover:text-blue-500 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30" title="Comments">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    </button>
+                    <button (click)="confirmDeleteTask(task); $event.stopPropagation()" class="p-1 text-gray-400 hover:text-red-500 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                  </div>
                 </div>
-              </div>
-              @if (task.description) {
-                <p class="text-gray-500 dark:text-gray-400 text-xs line-clamp-2 mb-2">{{ task.description }}</p>
-              }
-              <div class="flex items-center gap-2 mb-2">
-                <app-generic-badge [variant]="getPriorityVariant(task.priority)">{{ task.priority }}</app-generic-badge>
-                @if (getMilestoneName(task.milestoneId); as name) {
-                  <span class="text-xs text-gray-400">{{ name }}</span>
+                <!-- Description -->
+                @if (task.description) {
+                  <p class="text-gray-500 dark:text-gray-400 text-xs line-clamp-2 mb-3 leading-relaxed">{{ task.description }}</p>
                 }
-              </div>
-              @if (task.targetDate) {
-                <div class="flex items-center gap-1 mb-2">
-                  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                  <span class="text-xs text-gray-400">{{ task.targetDate | date:'mediumDate' }}</span>
+                <!-- Tags Row -->
+                <div class="flex items-center gap-2 mb-3 flex-wrap">
+                  <app-generic-badge [variant]="getPriorityVariant(task.priority)">{{ task.priority }}</app-generic-badge>
+                  @if (getMilestoneName(task.milestoneId); as name) {
+                    <span class="inline-flex items-center gap-1 text-[11px] text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                      {{ name }}
+                    </span>
+                  }
                 </div>
-              }
-              <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-                <span class="text-[10px] text-gray-400">by {{ getUserName(task.createdBy) }}</span>
-                @if (task.updatedBy && task.updatedAt !== task.createdAt) {
-                  <span class="text-[10px] text-gray-400">edited</span>
+                <!-- Target Date -->
+                @if (task.targetDate) {
+                  <div class="flex items-center gap-1.5 mb-3" [class]="isOverdue(task) ? 'text-red-500' : 'text-gray-400'">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span class="text-[11px] font-medium">
+                      @if (isOverdue(task)) {
+                        Overdue by {{ getOverdueDays(task) }}d
+                      } @else if (getDaysUntilTarget(task) === 0) {
+                        Due today
+                      } @else if (getDaysUntilTarget(task) === 1) {
+                        Due tomorrow
+                      } @else {
+                        {{ task.targetDate | date:'MMM d' }} ({{ getDaysUntilTarget(task) }}d)
+                      }
+                    </span>
+                  </div>
+                }
+                <!-- Footer -->
+                <div class="flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-gray-700/50">
+                  <span class="text-[10px] text-gray-400 font-medium">{{ getUserName(task.createdBy) }}</span>
+                  @if (task.updatedBy && task.updatedAt !== task.createdAt) {
+                    <span class="text-[10px] text-gray-400 flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      edited
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+            @if (getByStatus(col.status).length === 0) {
+              <div class="text-center py-8 text-gray-400 dark:text-gray-500">
+                <svg class="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <p class="text-xs font-medium">No tasks</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Milestones Section -->
+    @if (milestones().length > 0) {
+      <div class="mt-10">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">Milestones</h2>
+          <span class="text-sm text-gray-400">{{ milestones().length }} total</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          @for (m of milestones(); track m._id) {
+            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-900/50 transition-all duration-200 group">
+              <!-- Milestone Header -->
+              <div class="p-5 pb-3">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+                      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold text-gray-900 dark:text-white text-sm">{{ m.name }}</h4>
+                      <p class="text-[11px] text-gray-400 mt-0.5">{{ getMilestoneCompletedCount(m._id) }}/{{ getMilestoneTaskCount(m._id) }} tasks done</p>
+                    </div>
+                  </div>
+                  <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button (click)="openEditMilestone(m)" class="p-1.5 text-gray-400 hover:text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                    <button (click)="confirmDeleteMilestone(m)" class="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <!-- Progress Bar -->
+              <div class="px-5 pb-5">
+                @if (getMilestoneTaskCount(m._id) > 0) {
+                  <div class="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-500"
+                      [style.width.%]="getMilestoneCompletedCount(m._id) / getMilestoneTaskCount(m._id) * 100"></div>
+                  </div>
+                } @else {
+                  <div class="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full">
+                    <div class="h-full w-0"></div>
+                  </div>
                 }
               </div>
             </div>
@@ -112,68 +238,66 @@
       </div>
     }
   </div>
-
-  <!-- Milestones -->
-  @if (milestones().length > 0) {
-    <div class="mt-8">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Milestones</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        @for (m of milestones(); track m._id) {
-          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-            <div class="flex justify-between items-start">
-              <h4 class="font-medium text-gray-900 dark:text-white">{{ m.name }}</h4>
-              <div class="flex gap-1">
-                <button (click)="openEditMilestone(m)" class="p-1 text-gray-400 hover:text-blue-500">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                </button>
-                <button (click)="confirmDeleteMilestone(m)" class="p-1 text-gray-400 hover:text-red-500">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-  }
 </div>
 
 <!-- Task Dialog -->
 <app-generic-dialog [isOpen]="showTaskDialog()" [title]="editingTask() ? 'Edit Task' : 'New Task'" confirmText="Save" (onClose)="closeTaskDialog()" (onConfirm)="saveTask()">
   <div class="space-y-5">
     <div>
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-      <input [(ngModel)]="taskForm.title" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Task title" />
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Title</label>
+      <input [(ngModel)]="taskForm.title" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Task title" />
     </div>
     <div>
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-      <textarea [(ngModel)]="taskForm.description" rows="2" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Optional"></textarea>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
+      <textarea [(ngModel)]="taskForm.description" rows="2" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all" placeholder="Optional"></textarea>
     </div>
     <app-generic-badge-select label="Status" [options]="statusBadgeOptions" [value]="taskForm.status" (valueChange)="onStatusChange($event)" />
     <app-generic-badge-select label="Priority" [options]="priorityBadgeOptions" [value]="taskForm.priority" (valueChange)="onPriorityChange($event)" />
     <app-generic-select label="Milestone" [options]="milestoneSelectOptions" [value]="taskForm.milestoneId" (valueChange)="taskForm.milestoneId = $event" placeholder="None" />
-    <div class="grid grid-cols-3 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
-        <input type="date" [(ngModel)]="taskForm.startDate" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Date</label>
-        <input type="date" [(ngModel)]="taskForm.targetDate" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
-        <input type="date" [(ngModel)]="taskForm.endDate" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    <div>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timeline</label>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] text-gray-400 mb-1">Start</label>
+          <input type="date" [(ngModel)]="taskForm.startDate" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+        </div>
+        <div>
+          <label class="block text-[11px] text-gray-400 mb-1">Target</label>
+          <input type="date" [(ngModel)]="taskForm.targetDate" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+        </div>
+        <div>
+          <label class="block text-[11px] text-gray-400 mb-1">End</label>
+          <input type="date" [(ngModel)]="taskForm.endDate" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+        </div>
+        <div>
+          <label class="block text-[11px] text-gray-400 mb-1">Delivered</label>
+          <input type="date" [(ngModel)]="taskForm.deliveredDate" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+        </div>
       </div>
     </div>
     @if (editingTask()) {
-      <div class="pt-3 border-t border-gray-200 dark:border-gray-600 space-y-1">
-        <p class="text-xs text-gray-400">Created by {{ getUserName(editingTask()!.createdBy) }} on {{ editingTask()!.createdAt | date:'medium' }}</p>
+      <div class="pt-4 border-t border-gray-200 dark:border-gray-600 space-y-2">
+        <div class="flex items-center gap-2 text-xs text-gray-400">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Created by <span class="font-medium text-gray-500 dark:text-gray-300">{{ getUserName(editingTask()!.createdBy) }}</span> on {{ editingTask()!.createdAt | date:'MMM d, y' }}
+        </div>
         @if (editingTask()!.updatedBy && editingTask()!.updatedAt !== editingTask()!.createdAt) {
-          <p class="text-xs text-gray-400">Last updated by {{ getUserName(editingTask()!.updatedBy) }} on {{ editingTask()!.updatedAt | date:'medium' }}</p>
+          <div class="flex items-center gap-2 text-xs text-gray-400">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            Updated by <span class="font-medium text-gray-500 dark:text-gray-300">{{ getUserName(editingTask()!.updatedBy) }}</span> on {{ editingTask()!.updatedAt | date:'MMM d, y' }}
+          </div>
         }
         @if (editingTask()!.lastReviewedBy) {
-          <p class="text-xs text-gray-400">Last reviewed by {{ getUserName(editingTask()!.lastReviewedBy) }} on {{ editingTask()!.lastReviewedAt | date:'medium' }}</p>
+          <div class="flex items-center gap-2 text-xs text-gray-400">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Reviewed by <span class="font-medium text-gray-500 dark:text-gray-300">{{ getUserName(editingTask()!.lastReviewedBy) }}</span> on {{ editingTask()!.lastReviewedAt | date:'MMM d, y' }}
+          </div>
+        }
+        @if (editingTask()!.deliveredDate) {
+          <div class="flex items-center gap-2 text-xs text-gray-400">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Delivered on <span class="font-medium text-gray-500 dark:text-gray-300">{{ editingTask()!.deliveredDate | date:'MMM d, y' }}</span>
+          </div>
         }
       </div>
     }
@@ -183,40 +307,46 @@
 <!-- Milestone Dialog -->
 <app-generic-dialog [isOpen]="showMilestoneDialog()" [title]="editingMilestone() ? 'Edit Milestone' : 'New Milestone'" confirmText="Save" (onClose)="closeMilestoneDialog()" (onConfirm)="saveMilestone()">
   <div>
-    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
-    <input [(ngModel)]="milestoneForm.name" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Milestone name" />
+    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Name</label>
+    <input [(ngModel)]="milestoneForm.name" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Milestone name" />
   </div>
 </app-generic-dialog>
 
 <!-- Comments Panel -->
 @if (showCommentsPanel()) {
   <div class="fixed inset-0 z-50 flex justify-end">
-    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" (click)="closeComments()"></div>
-    <div class="relative w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl flex flex-col">
-      <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-        <h3 class="font-semibold text-gray-900 dark:text-white">Comments - {{ selectedTask()?.title }}</h3>
-        <button (click)="closeComments()" class="text-gray-400 hover:text-gray-600">
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" (click)="closeComments()"></div>
+    <div class="relative w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl flex flex-col border-l border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+        <div>
+          <h3 class="font-semibold text-gray-900 dark:text-white">Comments</h3>
+          <p class="text-xs text-gray-400 mt-0.5">{{ selectedTask()?.title }}</p>
+        </div>
+        <button (click)="closeComments()" class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+      <div class="flex-1 overflow-y-auto p-5 space-y-3">
         @for (comment of comments(); track comment._id) {
-          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs text-gray-500">{{ comment.createdAt | date:'short' }}</span>
+          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3.5">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs text-gray-400">{{ comment.createdAt | date:'short' }}</span>
               @if (comment.createdBy === authService.currentUser()?._id) {
-                <button (click)="deleteComment(comment)" class="text-xs text-red-500 hover:text-red-700">Delete</button>
+                <button (click)="deleteComment(comment)" class="text-[10px] text-red-400 hover:text-red-600 font-medium">Delete</button>
               }
             </div>
-            <p class="text-sm text-gray-900 dark:text-white">{{ comment.content }}</p>
+            <p class="text-sm text-gray-900 dark:text-white leading-relaxed">{{ comment.content }}</p>
           </div>
         } @empty {
-          <p class="text-center text-gray-400 text-sm py-8">No comments yet</p>
+          <div class="text-center py-12">
+            <svg class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            <p class="text-sm text-gray-400">No comments yet</p>
+          </div>
         }
       </div>
       <div class="p-4 border-t border-gray-200 dark:border-gray-700">
         <div class="flex gap-2">
-          <input [(ngModel)]="newComment" (keydown.enter)="addComment()" class="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Write a comment..." />
+          <input [(ngModel)]="newComment" (keydown.enter)="addComment()" class="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Write a comment..." />
           <app-generic-button (onClick)="addComment()">Send</app-generic-button>
         </div>
       </div>

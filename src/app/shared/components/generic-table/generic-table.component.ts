@@ -51,14 +51,14 @@ import { Component, input, output } from '@angular/core';
     </div>
   `,
 })
-export class GenericTableComponent<T extends Record<string, any>> {
+export class GenericTableComponent<T extends Record<string, unknown>> {
   data = input.required<T[]>();
   columns = input.required<Array<{ key: string; label: string }>>();
   showActions = input<boolean>(false);
   onEdit = output<T>();
   onDelete = output<T>();
 
-  getValue(row: T, key: string): any {
+  getValue(row: T, key: string): unknown {
     return row[key];
   }
 }
