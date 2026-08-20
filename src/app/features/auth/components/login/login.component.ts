@@ -42,9 +42,16 @@ import { GenericPasswordInputComponent } from '../../../../shared/components/gen
 export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+
   email = '';
   password = '';
   loading = signal(false);
+
+  constructor() {
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/profile']);
+    }
+  }
 
   onSubmit(event: Event): void {
     event.preventDefault();

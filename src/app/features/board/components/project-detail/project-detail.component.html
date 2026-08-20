@@ -78,7 +78,7 @@
 
 <!-- Task Dialog -->
 <app-generic-dialog [isOpen]="showTaskDialog()" [title]="editingTask() ? 'Edit Task' : 'New Task'" confirmText="Save" (onClose)="closeTaskDialog()" (onConfirm)="saveTask()">
-  <div class="space-y-4">
+  <div class="space-y-5">
     <div>
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
       <input [(ngModel)]="taskForm.title" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Task title" />
@@ -87,10 +87,8 @@
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
       <textarea [(ngModel)]="taskForm.description" rows="2" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Optional"></textarea>
     </div>
-    <div class="grid grid-cols-2 gap-4">
-      <app-generic-select label="Status" [options]="statusOptions" [value]="taskForm.status" (valueChange)="taskForm.status = $event" />
-      <app-generic-select label="Priority" [options]="priorityOptions" [value]="taskForm.priority" (valueChange)="taskForm.priority = $event" />
-    </div>
+    <app-generic-badge-select label="Status" [options]="statusBadgeOptions" [value]="taskForm.status" (valueChange)="onStatusChange($event)" />
+    <app-generic-badge-select label="Priority" [options]="priorityBadgeOptions" [value]="taskForm.priority" (valueChange)="onPriorityChange($event)" />
     <app-generic-select label="Milestone" [options]="milestoneSelectOptions" [value]="taskForm.milestoneId" (valueChange)="taskForm.milestoneId = $event" placeholder="None" />
   </div>
 </app-generic-dialog>

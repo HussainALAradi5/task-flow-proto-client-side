@@ -1,6 +1,7 @@
 export interface BaseEntity {
   _id: string;
   code: string;
+  slug: string;
   createdBy?: string;
   updatedBy?: string;
   createdAt: string;
@@ -26,3 +27,4 @@ export interface ApiResponse<T> {
   message?: string;
   token?: string;
 }
+

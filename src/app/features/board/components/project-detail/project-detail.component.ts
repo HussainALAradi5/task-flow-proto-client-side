@@ -9,15 +9,25 @@ import { Milestone } from '../../../../core/interfaces/milestone.interface';
 import { TaskStatus, TASK_STATUS_OPTIONS } from '../../../../core/enums/task-status.enum';
 import { TaskPriority, TASK_PRIORITY_OPTIONS } from '../../../../core/enums/task-priority.enum';
 import { SelectOption } from '../../../../shared/components/generic-select/generic-select.component';
+import { BadgeOption } from '../../../../shared/components/generic-badge-select/generic-badge-select.component';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
 import { GenericDialogComponent } from '../../../../shared/components/generic-dialog/generic-dialog.component';
 import { GenericBadgeComponent } from '../../../../shared/components/generic-badge/generic-badge.component';
 import { GenericSelectComponent } from '../../../../shared/components/generic-select/generic-select.component';
+import { GenericBadgeSelectComponent } from '../../../../shared/components/generic-badge-select/generic-badge-select.component';
+
+interface TaskForm {
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  milestoneId: string;
+}
 
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [RouterLink, FormsModule, GenericButtonComponent, GenericDialogComponent, GenericBadgeComponent, GenericSelectComponent],
+  imports: [RouterLink, FormsModule, GenericButtonComponent, GenericDialogComponent, GenericBadgeComponent, GenericSelectComponent, GenericBadgeSelectComponent],
   templateUrl: './project-detail.component.html',
 })
 export class ProjectDetailComponent implements OnInit {
@@ -37,17 +47,29 @@ export class ProjectDetailComponent implements OnInit {
     { status: TaskStatus.DONE, label: 'Done', dotColor: 'bg-green-500' },
   ];
 
-  statusOptions: SelectOption[] = TASK_STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label }));
-  priorityOptions: SelectOption[] = TASK_PRIORITY_OPTIONS.map((o) => ({ value: o.value, label: o.label }));
+  statusBadgeOptions: BadgeOption[] = TASK_STATUS_OPTIONS.map((o) => ({
+    value: o.value,
+    label: o.label,
+    selectedClass: `${o.badge} border-2 border-current`,
+    unselectedClass: `bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200`,
+  }));
+
+  priorityBadgeOptions: BadgeOption[] = TASK_PRIORITY_OPTIONS.map((o) => ({
+    value: o.value,
+    label: o.label,
+    selectedClass: `${o.badge} border-2 border-current`,
+    unselectedClass: `bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200`,
+  }));
+
+  milestoneSelectOptions: SelectOption[] = [];
 
   showTaskDialog = signal(false);
   showMilestoneDialog = signal(false);
   editingTask = signal<Task | null>(null);
   editingMilestone = signal<Milestone | null>(null);
   draggedTask = signal<Task | null>(null);
-  milestoneSelectOptions: SelectOption[] = [];
 
-  taskForm: any = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '' };
+  taskForm: TaskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '' };
   milestoneForm = { name: '' };
 
   ngOnInit(): void {
@@ -58,10 +80,10 @@ export class ProjectDetailComponent implements OnInit {
   loadProject(code: string): void {
     this.api.getAll<Project>('projects').subscribe({
       next: (res) => {
-        const project = res.data.find((p) => p.code === code);
-        if (project) {
-          this.project.set(project);
-          this.projectId = project._id;
+        const found = res.data.find((p) => p.code === code || p.slug === code);
+        if (found) {
+          this.project.set(found);
+          this.projectId = found._id;
           this.loadTasks();
           this.loadMilestones();
         }
@@ -82,11 +104,11 @@ export class ProjectDetailComponent implements OnInit {
     });
   }
 
-  getByStatus(status: string): Task[] {
+  getByStatus(status: TaskStatus): Task[] {
     return this.tasks().filter((t) => t.status === status);
   }
 
-  getCount(status: string): number {
+  getCount(status: TaskStatus): number {
     return this.getByStatus(status).length;
   }
 
@@ -96,10 +118,10 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   getPriorityVariant(p: TaskPriority): 'success' | 'warning' | 'danger' | 'info' {
-    const map: Record<string, 'success' | 'warning' | 'danger' | 'info'> = {
+    const map: Record<TaskPriority, 'success' | 'warning' | 'danger' | 'info'> = {
       [TaskPriority.LOW]: 'info', [TaskPriority.MEDIUM]: 'success', [TaskPriority.HIGH]: 'warning', [TaskPriority.CRITICAL]: 'danger',
     };
-    return map[p] || 'info';
+    return map[p];
   }
 
   onDragStart(event: DragEvent, task: Task): void {
@@ -114,15 +136,23 @@ export class ProjectDetailComponent implements OnInit {
 
   onDragLeave(_event: DragEvent): void {}
 
-  onDrop(event: DragEvent, newStatus: string): void {
+  onDrop(event: DragEvent, newStatus: TaskStatus): void {
     event.preventDefault();
     const task = this.draggedTask();
     if (task && task.status !== newStatus) {
       this.api.update('tasks', task._id, { status: newStatus }, 'Task moved').subscribe({
-        next: () => this.tasks.update((ts) => ts.map((t) => (t._id === task._id ? { ...t, status: newStatus as TaskStatus } : t))),
+        next: () => this.tasks.update((ts) => ts.map((t) => (t._id === task._id ? { ...t, status: newStatus } : t))),
       });
     }
     this.draggedTask.set(null);
+  }
+
+  onStatusChange(value: string): void {
+    this.taskForm.status = value as TaskStatus;
+  }
+
+  onPriorityChange(value: string): void {
+    this.taskForm.priority = value as TaskPriority;
   }
 
   openCreateTask(): void {
@@ -143,7 +173,7 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   saveTask(): void {
-    const data = { ...this.taskForm, projectId: this.projectId };
+    const data: Record<string, unknown> = { ...this.taskForm, projectId: this.projectId };
     const obs = this.editingTask()
       ? this.api.update('tasks', this.editingTask()!._id, data, 'Task updated')
       : this.api.create('tasks', data, 'Task created');
@@ -168,7 +198,7 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   saveMilestone(): void {
-    const data = { ...this.milestoneForm, projectId: this.projectId };
+    const data: Record<string, unknown> = { ...this.milestoneForm, projectId: this.projectId };
     const obs = this.editingMilestone()
       ? this.api.update('milestones', this.editingMilestone()!._id, data, 'Milestone updated')
       : this.api.create('milestones', data, 'Milestone created');

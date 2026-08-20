@@ -61,6 +61,12 @@ export class SignupComponent {
   mobileNumber = '';
   loading = signal(false);
 
+  constructor() {
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/profile']);
+    }
+  }
+
   onSubmit(event: Event): void {
     event.preventDefault();
     this.loading.set(true);
