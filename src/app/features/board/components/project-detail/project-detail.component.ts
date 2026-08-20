@@ -20,6 +20,7 @@ import { GenericBadgeComponent } from '../../../../shared/components/generic-bad
 import { GenericSelectComponent } from '../../../../shared/components/generic-select/generic-select.component';
 import { GenericBadgeSelectComponent } from '../../../../shared/components/generic-badge-select/generic-badge-select.component';
 import { GenericSearchComponent } from '../../../../shared/components/generic-search/generic-search.component';
+import { GenericSwitchComponent } from '../../../../shared/components/generic-switch/generic-switch.component';
 
 interface TaskForm {
   title: string;
@@ -36,7 +37,7 @@ interface TaskForm {
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [RouterLink, FormsModule, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericBadgeComponent, GenericSelectComponent, GenericBadgeSelectComponent, GenericSearchComponent],
+  imports: [RouterLink, FormsModule, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericBadgeComponent, GenericSelectComponent, GenericBadgeSelectComponent, GenericSearchComponent, GenericSwitchComponent],
   templateUrl: './project-detail.component.html',
 })
 export class ProjectDetailComponent implements OnInit {
@@ -86,6 +87,7 @@ export class ProjectDetailComponent implements OnInit {
   filterDateFrom = signal<string>('');
   filterDateTo = signal<string>('');
   sortBy = signal<string>('newest');
+  showDeleted = signal(false);
   newComment = '';
 
   taskForm: TaskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '', startDate: '', targetDate: '', endDate: '', deliveredDate: '' };
@@ -115,7 +117,12 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   loadTasks(): void {
-    this.api.getAll<Task>(`tasks/project/${this.projectId}`).subscribe({ next: (res) => this.tasks.set(res.data) });
+    this.api.getAll<Task>(`tasks/project/${this.projectId}`, undefined, undefined, undefined, this.showDeleted()).subscribe({ next: (res) => this.tasks.set(res.data) });
+  }
+
+  onToggleDeleted(show: boolean): void {
+    this.showDeleted.set(show);
+    this.loadTasks();
   }
 
   loadMilestones(): void {
@@ -221,10 +228,11 @@ export class ProjectDetailComponent implements OnInit {
     this.filterDateFrom.set('');
     this.filterDateTo.set('');
     this.sortBy.set('newest');
+    this.showDeleted.set(false);
   }
 
   hasActiveFilters(): boolean {
-    return !!(this.taskSearch || this.filterStatus() || this.filterPriority() || this.filterDateFrom() || this.filterDateTo() || this.sortBy() !== 'newest');
+    return !!(this.taskSearch || this.filterStatus() || this.filterPriority() || this.filterDateFrom() || this.filterDateTo() || this.sortBy() !== 'newest' || this.showDeleted());
   }
 
   getCount(status: TaskStatus): number {

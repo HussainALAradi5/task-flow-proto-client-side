@@ -30,6 +30,7 @@ export class BoardComponent implements OnInit {
   showDialog = signal(false);
   editingProject = signal<Project | null>(null);
   exactMatch = signal(false);
+  showDeleted = signal(false);
   formData = { title: '', description: '' };
 
   ngOnInit(): void {
@@ -39,7 +40,7 @@ export class BoardComponent implements OnInit {
   loadProjects(): void {
     this.loading.set(true);
     const { search, exactMatch, page, limit } = this.filter.getParams();
-    this.api.getAll<Project>('projects', { page, limit }, search || undefined, exactMatch).subscribe({
+    this.api.getAll<Project>('projects', { page, limit }, search || undefined, exactMatch, this.showDeleted()).subscribe({
       next: (res) => {
         this.projects.set(res.data);
         this.pagination.set(res.pagination);
@@ -57,6 +58,11 @@ export class BoardComponent implements OnInit {
   onExactMatchChange(exactMatch: boolean): void {
     this.exactMatch.set(exactMatch);
     this.filter.setExactMatch(exactMatch);
+    this.loadProjects();
+  }
+
+  onToggleDeleted(show: boolean): void {
+    this.showDeleted.set(show);
     this.loadProjects();
   }
 

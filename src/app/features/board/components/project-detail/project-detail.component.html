@@ -95,6 +95,7 @@
             <option value="priority">Priority</option>
           </select>
         </div>
+        <app-generic-switch label="Show deleted" [checked]="showDeleted()" (checkedChange)="onToggleDeleted($event)" />
         @if (hasActiveFilters()) {
           <button (click)="clearFilters()" class="px-3 py-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors font-medium">
             Clear

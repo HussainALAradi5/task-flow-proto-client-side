@@ -15,6 +15,7 @@
       <app-generic-search placeholder="Search projects..." (search)="onSearch($event)" />
     </div>
     <app-generic-switch label="Exact match" [checked]="exactMatch()" (checkedChange)="onExactMatchChange($event)" />
+    <app-generic-switch label="Show deleted" [checked]="showDeleted()" (checkedChange)="onToggleDeleted($event)" />
   </div>
 
   @if (loading()) {
