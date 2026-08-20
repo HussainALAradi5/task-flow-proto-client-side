@@ -1,17 +1,6 @@
-export interface Comment {
-  _id: string;
+import { BaseEntity } from './base.model';
+
+export interface Comment extends BaseEntity {
   content: string;
   taskId: string;
-  createdBy?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateCommentRequest {
-  content: string;
-  taskId: string;
-}
-
-export interface UpdateCommentRequest {
-  content: string;
 }

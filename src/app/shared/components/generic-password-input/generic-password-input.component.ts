@@ -1,4 +1,4 @@
-import { Component, input, signal } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -20,14 +20,15 @@ import { FormsModule } from '@angular/forms';
           [id]="id()"
           [type]="showPassword() ? 'text' : 'password'"
           [placeholder]="placeholder()"
-          [ngModel]="value"
+          [ngModel]="value()"
+          (ngModelChange)="valueChange.emit($event)"
           [disabled]="disabled()"
           class="w-full px-4 py-3 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 transition-all"
         />
         <button
           type="button"
           (click)="showPassword.set(!showPassword())"
-          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1"
         >
           @if (showPassword()) {
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,12 +46,13 @@ import { FormsModule } from '@angular/forms';
   `,
 })
 export class GenericPasswordInputComponent {
-  id = input<string>();
-  label = input<string>();
+  id = input<string>('password');
+  label = input<string>('Password');
   placeholder = input<string>('Enter your password');
-  value = input<string>();
+  value = input<string>('');
   disabled = input<boolean>(false);
   required = input<boolean>(false);
+  valueChange = output<string>();
 
   showPassword = signal(false);
 }

@@ -1,5 +1,6 @@
-export interface Task {
-  _id: string;
+import { BaseEntity } from './base.model';
+
+export interface Task extends BaseEntity {
   title: string;
   description?: string;
   status: TaskStatus;
@@ -8,9 +9,6 @@ export interface Task {
   milestoneId?: string;
   assignTo?: string;
   lastAssignTo?: string;
-  createdBy?: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export enum TaskStatus {
@@ -25,23 +23,4 @@ export enum TaskPriority {
   MEDIUM = 'Medium',
   HIGH = 'High',
   CRITICAL = 'Critical',
-}
-
-export interface CreateTaskRequest {
-  title: string;
-  description?: string;
-  status?: TaskStatus;
-  priority?: TaskPriority;
-  projectId: string;
-  milestoneId?: string;
-  assignTo?: string;
-}
-
-export interface UpdateTaskRequest {
-  title?: string;
-  description?: string;
-  status?: TaskStatus;
-  priority?: TaskPriority;
-  milestoneId?: string;
-  assignTo?: string;
 }

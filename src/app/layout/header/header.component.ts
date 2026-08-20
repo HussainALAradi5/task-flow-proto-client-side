@@ -35,8 +35,11 @@ import { ThemeService } from '../../core/services/theme.service';
             </button>
 
             @if (authService.isLoggedIn()) {
-              <a routerLink="/profile" class="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                {{ authService.currentUser()?.userName }}
+              <a routerLink="/profile" class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <span class="text-blue-600 dark:text-blue-400 font-medium text-xs">{{ authService.currentUser()?.userName?.charAt(0)?.toUpperCase() }}</span>
+                </div>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline">{{ authService.currentUser()?.userName }}</span>
               </a>
               <button
                 (click)="authService.logout()"

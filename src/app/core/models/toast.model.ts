@@ -4,7 +4,7 @@ export interface Toast {
   id: string;
   message: string;
   type: MessageType;
-  duration?: number;
+  duration: number;
 }
 
 export interface Alert {

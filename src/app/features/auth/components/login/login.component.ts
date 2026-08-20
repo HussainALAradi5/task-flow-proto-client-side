@@ -35,9 +35,11 @@ import { GenericPasswordInputComponent } from '../../../../shared/components/gen
             </div>
 
             <app-generic-password-input
-              id="password"
+              id="login-password"
               label="Password"
               placeholder="Enter your password"
+              [value]="password"
+              (valueChange)="password = $event"
               [required]="true"
             />
 
@@ -68,7 +70,7 @@ export class LoginComponent {
     this.loading.set(true);
 
     this.authService.login({ email: this.email, password: this.password }).subscribe({
-      next: () => this.router.navigate(['/board']),
+      next: () => this.router.navigate(['/profile']),
       error: () => this.loading.set(false),
     });
   }

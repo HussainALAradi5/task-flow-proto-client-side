@@ -1,53 +1,5 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { PaginatedResult, PaginationParams } from '../models/pagination.model';
-import { ApiResponse } from '../models/api-response.model';
-import { ToastService } from './toast.service';
+import { Injectable } from '@angular/core';
+import { BaseService } from './base.service';
 
 @Injectable({ providedIn: 'root' })
-export class ApiService {
-  private readonly baseUrl = environment.apiUrl;
-  private http = inject(HttpClient);
-  private toast = inject(ToastService);
-
-  getAll<T>(endpoint: string, params?: PaginationParams): Observable<PaginatedResult<T>> {
-    let httpParams = new HttpParams();
-    if (params) {
-      httpParams = httpParams.set('page', params.page.toString()).set('limit', params.limit.toString());
-    }
-    return this.http.get<PaginatedResult<T>>(`${this.baseUrl}/${endpoint}`, { params: httpParams });
-  }
-
-  getById<T>(endpoint: string, id: string): Observable<ApiResponse<T>> {
-    return this.http.get<ApiResponse<T>>(`${this.baseUrl}/${endpoint}/${id}`);
-  }
-
-  create<T>(endpoint: string, data: Partial<T>, successMsg?: string): Observable<ApiResponse<T>> {
-    return this.http.post<ApiResponse<T>>(`${this.baseUrl}/${endpoint}`, data).pipe(
-      tap({
-        next: () => { if (successMsg) this.toast.success(successMsg); },
-        error: (err) => this.toast.error(err.error?.message || 'Failed to create'),
-      }),
-    );
-  }
-
-  update<T>(endpoint: string, id: string, data: Partial<T>, successMsg?: string): Observable<ApiResponse<T>> {
-    return this.http.patch<ApiResponse<T>>(`${this.baseUrl}/${endpoint}/${id}`, data).pipe(
-      tap({
-        next: () => { if (successMsg) this.toast.success(successMsg); },
-        error: (err) => this.toast.error(err.error?.message || 'Failed to update'),
-      }),
-    );
-  }
-
-  delete<T>(endpoint: string, id: string, successMsg?: string): Observable<ApiResponse<T>> {
-    return this.http.delete<ApiResponse<T>>(`${this.baseUrl}/${endpoint}/${id}`).pipe(
-      tap({
-        next: () => { if (successMsg) this.toast.success(successMsg); },
-        error: (err) => this.toast.error(err.error?.message || 'Failed to delete'),
-      }),
-    );
-  }
-}
+export class ApiService extends BaseService {}
