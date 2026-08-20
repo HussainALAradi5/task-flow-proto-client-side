@@ -13,3 +13,15 @@ export const authGuard: CanActivateFn = () => {
   router.navigate(['/auth/login']);
   return false;
 };
+
+export const guestGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.isLoggedIn()) {
+    router.navigate(['/board']);
+    return false;
+  }
+
+  return true;
+};

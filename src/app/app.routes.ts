@@ -1,13 +1,15 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/board', pathMatch: 'full' },
+  { path: '', loadComponent: () => import('./features/home/home.component').then(m => m.HomeComponent) },
   {
     path: 'auth',
+    canActivate: [guestGuard],
     children: [
       { path: 'login', loadComponent: () => import('./features/auth/components/login/login.component').then(m => m.LoginComponent) },
       { path: 'signup', loadComponent: () => import('./features/auth/components/signup/signup.component').then(m => m.SignupComponent) },
+      { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
   },
   {
@@ -21,9 +23,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/board/components/board/board.component').then(m => m.BoardComponent),
   },
   {
+    path: 'board/:projectId',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/board/components/project-detail/project-detail.component').then(m => m.ProjectDetailComponent),
+  },
+  {
     path: 'teams',
     canActivate: [authGuard],
     loadComponent: () => import('./features/team/components/team/team.component').then(m => m.TeamComponent),
   },
-  { path: '**', redirectTo: '/board' },
+  { path: '**', redirectTo: '' },
 ];

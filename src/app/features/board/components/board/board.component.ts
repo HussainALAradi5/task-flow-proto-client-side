@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { ApiService } from '../../../../core/services/api.service';
 import { AlertService } from '../../../../core/services/alert.service';
@@ -11,7 +12,7 @@ import { GenericPaginationComponent } from '../../../../shared/components/generi
 @Component({
   selector: 'app-board',
   standalone: true,
-  imports: [FormsModule, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericPaginationComponent],
+  imports: [FormsModule, RouterLink, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericPaginationComponent],
   template: `
     <div class="p-6 max-w-7xl mx-auto">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -34,10 +35,10 @@ import { GenericPaginationComponent } from '../../../../shared/components/generi
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (project of projects(); track project._id) {
-            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-shadow">
+            <a [routerLink]="['/board', project._id]" class="block bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 transition-all cursor-pointer">
               <div class="flex justify-between items-start mb-4">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ project.title }}</h3>
-                <div class="flex gap-2">
+                <div class="flex gap-2" (click)="$event.stopPropagation()">
                   <button (click)="openEditDialog(project)" class="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -54,7 +55,7 @@ import { GenericPaginationComponent } from '../../../../shared/components/generi
               <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <span class="text-xs text-gray-400">Created {{ project.createdAt | date:'mediumDate' }}</span>
               </div>
-            </div>
+            </a>
           } @empty {
             <div class="col-span-full text-center py-16 bg-gray-50 dark:bg-gray-800/50 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700">
               <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,20 +86,11 @@ import { GenericPaginationComponent } from '../../../../shared/components/generi
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-          <input
-            [(ngModel)]="formData.title"
-            class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Project title"
-          />
+          <input [(ngModel)]="formData.title" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Project title" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-          <textarea
-            [(ngModel)]="formData.description"
-            rows="3"
-            class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            placeholder="Optional description"
-          ></textarea>
+          <textarea [(ngModel)]="formData.description" rows="3" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Optional description"></textarea>
         </div>
       </div>
     </app-generic-dialog>
@@ -151,30 +143,20 @@ export class BoardComponent implements OnInit {
   saveProject(): void {
     if (this.editingProject()) {
       this.api.update('projects', this.editingProject()!._id, this.formData, 'Project updated').subscribe({
-        next: () => {
-          this.loadProjects(1);
-          this.closeDialog();
-        },
+        next: () => { this.loadProjects(1); this.closeDialog(); },
       });
     } else {
       this.api.create('projects', this.formData, 'Project created').subscribe({
-        next: () => {
-          this.loadProjects(1);
-          this.closeDialog();
-        },
+        next: () => { this.loadProjects(1); this.closeDialog(); },
       });
     }
   }
 
   confirmDelete(project: Project): void {
-    this.alert.confirm(
-      `Delete "${project.title}"? This action cannot be undone.`,
-      () => {
-        this.api.delete('projects', project._id, 'Project deleted').subscribe({
-          next: () => this.loadProjects(1),
-        });
-      },
-      'Delete Project',
-    );
+    this.alert.confirm(`Delete "${project.title}"?`, () => {
+      this.api.delete('projects', project._id, 'Project deleted').subscribe({
+        next: () => this.loadProjects(1),
+      });
+    }, 'Delete Project');
   }
 }
