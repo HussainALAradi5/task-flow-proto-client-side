@@ -1,11 +1,15 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { ApiService } from '../../../../core/services/api.service';
+import { FilterService } from '../../../../core/services/filter.service';
 import { AlertService } from '../../../../core/services/alert.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { Project } from '../../../../core/interfaces/project.interface';
 import { Task } from '../../../../core/interfaces/task.interface';
 import { Milestone } from '../../../../core/interfaces/milestone.interface';
+import { Comment } from '../../../../core/interfaces/comment.interface';
 import { TaskStatus, TASK_STATUS_OPTIONS } from '../../../../core/enums/task-status.enum';
 import { TaskPriority, TASK_PRIORITY_OPTIONS } from '../../../../core/enums/task-priority.enum';
 import { SelectOption } from '../../../../shared/components/generic-select/generic-select.component';
@@ -15,6 +19,7 @@ import { GenericDialogComponent } from '../../../../shared/components/generic-di
 import { GenericBadgeComponent } from '../../../../shared/components/generic-badge/generic-badge.component';
 import { GenericSelectComponent } from '../../../../shared/components/generic-select/generic-select.component';
 import { GenericBadgeSelectComponent } from '../../../../shared/components/generic-badge-select/generic-badge-select.component';
+import { GenericSearchComponent } from '../../../../shared/components/generic-search/generic-search.component';
 
 interface TaskForm {
   title: string;
@@ -27,17 +32,21 @@ interface TaskForm {
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [RouterLink, FormsModule, GenericButtonComponent, GenericDialogComponent, GenericBadgeComponent, GenericSelectComponent, GenericBadgeSelectComponent],
+  imports: [RouterLink, FormsModule, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericBadgeComponent, GenericSelectComponent, GenericBadgeSelectComponent, GenericSearchComponent],
   templateUrl: './project-detail.component.html',
 })
 export class ProjectDetailComponent implements OnInit {
   private api = inject(ApiService);
   private alert = inject(AlertService);
   private route = inject(ActivatedRoute);
+  private filter = inject(FilterService);
+  authService = inject(AuthService);
 
   project = signal<Project | null>(null);
   tasks = signal<Task[]>([]);
   milestones = signal<Milestone[]>([]);
+  comments = signal<Comment[]>([]);
+  selectedTask = signal<Task | null>(null);
   projectId = '';
 
   columns = [
@@ -48,15 +57,13 @@ export class ProjectDetailComponent implements OnInit {
   ];
 
   statusBadgeOptions: BadgeOption[] = TASK_STATUS_OPTIONS.map((o) => ({
-    value: o.value,
-    label: o.label,
+    value: o.value, label: o.label,
     selectedClass: `${o.badge} border-2 border-current`,
     unselectedClass: `bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200`,
   }));
 
   priorityBadgeOptions: BadgeOption[] = TASK_PRIORITY_OPTIONS.map((o) => ({
-    value: o.value,
-    label: o.label,
+    value: o.value, label: o.label,
     selectedClass: `${o.badge} border-2 border-current`,
     unselectedClass: `bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200`,
   }));
@@ -65,23 +72,27 @@ export class ProjectDetailComponent implements OnInit {
 
   showTaskDialog = signal(false);
   showMilestoneDialog = signal(false);
+  showCommentsPanel = signal(false);
   editingTask = signal<Task | null>(null);
   editingMilestone = signal<Milestone | null>(null);
   draggedTask = signal<Task | null>(null);
   taskSearch = '';
+  filterStatus = signal<string>('');
+  filterPriority = signal<string>('');
+  newComment = '';
 
   taskForm: TaskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '' };
   milestoneForm = { name: '' };
 
   ngOnInit(): void {
-    const code = this.route.snapshot.paramMap.get('projectCode') || '';
-    this.loadProject(code);
+    const slug = this.route.snapshot.paramMap.get('projectSlug') || '';
+    this.loadProject(slug);
   }
 
-  loadProject(code: string): void {
+  loadProject(slug: string): void {
     this.api.getAll<Project>('projects').subscribe({
       next: (res) => {
-        const found = res.data.find((p) => p.code === code || p.slug === code);
+        const found = res.data.find((p) => p.slug === slug || p.code === slug);
         if (found) {
           this.project.set(found);
           this.projectId = found._id;
@@ -105,11 +116,37 @@ export class ProjectDetailComponent implements OnInit {
     });
   }
 
+  loadComments(taskId: string): void {
+    this.api.getAll<Comment>(`comments/task/${taskId}`).subscribe({ next: (res) => this.comments.set(res.data) });
+  }
+
   getByStatus(status: TaskStatus): Task[] {
-    const tasks = this.taskSearch
-      ? this.tasks().filter((t) => t.title.toLowerCase().includes(this.taskSearch.toLowerCase()))
-      : this.tasks();
+    let tasks = this.tasks();
+    if (this.taskSearch) {
+      const q = this.taskSearch.toLowerCase();
+      tasks = tasks.filter((t) => t.title.toLowerCase().includes(q) || (t.description && t.description.toLowerCase().includes(q)));
+    }
+    if (this.filterStatus()) {
+      tasks = tasks.filter((t) => t.status === this.filterStatus());
+    }
+    if (this.filterPriority()) {
+      tasks = tasks.filter((t) => t.priority === this.filterPriority());
+    }
     return tasks.filter((t) => t.status === status);
+  }
+
+  onFilterStatus(value: string): void {
+    this.filterStatus.set(value);
+  }
+
+  onFilterPriority(value: string): void {
+    this.filterPriority.set(value);
+  }
+
+  clearFilters(): void {
+    this.taskSearch = '';
+    this.filterStatus.set('');
+    this.filterPriority.set('');
   }
 
   getCount(status: TaskStatus): number {
@@ -126,6 +163,10 @@ export class ProjectDetailComponent implements OnInit {
       [TaskPriority.LOW]: 'info', [TaskPriority.MEDIUM]: 'success', [TaskPriority.HIGH]: 'warning', [TaskPriority.CRITICAL]: 'danger',
     };
     return map[p];
+  }
+
+  onSearchTasks(query: string): void {
+    this.taskSearch = query;
   }
 
   onDragStart(event: DragEvent, task: Task): void {
@@ -151,13 +192,8 @@ export class ProjectDetailComponent implements OnInit {
     this.draggedTask.set(null);
   }
 
-  onStatusChange(value: string): void {
-    this.taskForm.status = value as TaskStatus;
-  }
-
-  onPriorityChange(value: string): void {
-    this.taskForm.priority = value as TaskPriority;
-  }
+  onStatusChange(value: string): void { this.taskForm.status = value as TaskStatus; }
+  onPriorityChange(value: string): void { this.taskForm.priority = value as TaskPriority; }
 
   openCreateTask(): void {
     this.editingTask.set(null);
@@ -171,10 +207,7 @@ export class ProjectDetailComponent implements OnInit {
     this.showTaskDialog.set(true);
   }
 
-  closeTaskDialog(): void {
-    this.showTaskDialog.set(false);
-    this.editingTask.set(null);
-  }
+  closeTaskDialog(): void { this.showTaskDialog.set(false); this.editingTask.set(null); }
 
   saveTask(): void {
     const data: Record<string, unknown> = { ...this.taskForm, projectId: this.projectId };
@@ -190,16 +223,38 @@ export class ProjectDetailComponent implements OnInit {
     }, 'Delete Task');
   }
 
+  openComments(task: Task): void {
+    this.selectedTask.set(task);
+    this.loadComments(task._id);
+    this.showCommentsPanel.set(true);
+  }
+
+  closeComments(): void {
+    this.showCommentsPanel.set(false);
+    this.selectedTask.set(null);
+    this.newComment = '';
+  }
+
+  addComment(): void {
+    if (!this.newComment.trim() || !this.selectedTask()) return;
+    this.api.create('comments', { content: this.newComment, taskId: this.selectedTask()!._id }, 'Comment added').subscribe({
+      next: () => { this.loadComments(this.selectedTask()!._id); this.newComment = ''; },
+    });
+  }
+
+  deleteComment(comment: Comment): void {
+    this.api.delete('comments', comment._id, 'Comment deleted').subscribe({
+      next: () => this.loadComments(this.selectedTask()!._id),
+    });
+  }
+
   openEditMilestone(m: Milestone): void {
     this.editingMilestone.set(m);
     this.milestoneForm = { name: m.name };
     this.showMilestoneDialog.set(true);
   }
 
-  closeMilestoneDialog(): void {
-    this.showMilestoneDialog.set(false);
-    this.editingMilestone.set(null);
-  }
+  closeMilestoneDialog(): void { this.showMilestoneDialog.set(false); this.editingMilestone.set(null); }
 
   saveMilestone(): void {
     const data: Record<string, unknown> = { ...this.milestoneForm, projectId: this.projectId };
