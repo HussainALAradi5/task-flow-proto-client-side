@@ -10,6 +10,7 @@ import { Project } from '../../../../core/interfaces/project.interface';
 import { Task } from '../../../../core/interfaces/task.interface';
 import { Milestone } from '../../../../core/interfaces/milestone.interface';
 import { Comment } from '../../../../core/interfaces/comment.interface';
+import { User } from '../../../../core/models/user.model';
 import { TaskStatus, TASK_STATUS_OPTIONS } from '../../../../core/enums/task-status.enum';
 import { TaskPriority, TASK_PRIORITY_OPTIONS } from '../../../../core/enums/task-priority.enum';
 import { SelectOption } from '../../../../shared/components/generic-select/generic-select.component';
@@ -27,6 +28,9 @@ interface TaskForm {
   status: TaskStatus;
   priority: TaskPriority;
   milestoneId: string;
+  startDate: string;
+  targetDate: string;
+  endDate: string;
 }
 
 @Component({
@@ -47,6 +51,7 @@ export class ProjectDetailComponent implements OnInit {
   milestones = signal<Milestone[]>([]);
   comments = signal<Comment[]>([]);
   selectedTask = signal<Task | null>(null);
+  users = signal<User[]>([]);
   projectId = '';
 
   columns = [
@@ -79,9 +84,12 @@ export class ProjectDetailComponent implements OnInit {
   taskSearch = '';
   filterStatus = signal<string>('');
   filterPriority = signal<string>('');
+  filterDateFrom = signal<string>('');
+  filterDateTo = signal<string>('');
+  sortBy = signal<string>('newest');
   newComment = '';
 
-  taskForm: TaskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '' };
+  taskForm: TaskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '', startDate: '', targetDate: '', endDate: '' };
   milestoneForm = { name: '' };
 
   ngOnInit(): void {
@@ -98,6 +106,7 @@ export class ProjectDetailComponent implements OnInit {
           this.projectId = found._id;
           this.loadTasks();
           this.loadMilestones();
+          this.loadUsers();
         }
       },
     });
@@ -116,8 +125,17 @@ export class ProjectDetailComponent implements OnInit {
     });
   }
 
+  loadUsers(): void {
+    this.api.getAll<User>('users').subscribe({ next: (res) => this.users.set(res.data) });
+  }
+
   loadComments(taskId: string): void {
     this.api.getAll<Comment>(`comments/task/${taskId}`).subscribe({ next: (res) => this.comments.set(res.data) });
+  }
+
+  getUserName(id?: string): string {
+    if (!id) return 'Unknown';
+    return this.users().find((u) => u._id === id)?.userName || 'Unknown';
   }
 
   getByStatus(status: TaskStatus): Task[] {
@@ -132,7 +150,39 @@ export class ProjectDetailComponent implements OnInit {
     if (this.filterPriority()) {
       tasks = tasks.filter((t) => t.priority === this.filterPriority());
     }
-    return tasks.filter((t) => t.status === status);
+    if (this.filterDateFrom()) {
+      const from = new Date(this.filterDateFrom());
+      tasks = tasks.filter((t) => t.targetDate && new Date(t.targetDate) >= from);
+    }
+    if (this.filterDateTo()) {
+      const to = new Date(this.filterDateTo());
+      tasks = tasks.filter((t) => t.targetDate && new Date(t.targetDate) <= to);
+    }
+    const filtered = tasks.filter((t) => t.status === status);
+    return this.sortTasks(filtered);
+  }
+
+  sortTasks(tasks: Task[]): Task[] {
+    const sort = this.sortBy();
+    return [...tasks].sort((a, b) => {
+      if (sort === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sort === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      if (sort === 'target-asc') {
+        if (!a.targetDate) return 1;
+        if (!b.targetDate) return -1;
+        return new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime();
+      }
+      if (sort === 'target-desc') {
+        if (!a.targetDate) return 1;
+        if (!b.targetDate) return -1;
+        return new Date(b.targetDate).getTime() - new Date(a.targetDate).getTime();
+      }
+      if (sort === 'priority') {
+        const order: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+        return (order[a.priority] ?? 4) - (order[b.priority] ?? 4);
+      }
+      return 0;
+    });
   }
 
   onFilterStatus(value: string): void {
@@ -143,10 +193,29 @@ export class ProjectDetailComponent implements OnInit {
     this.filterPriority.set(value);
   }
 
+  onFilterDateFrom(value: string): void {
+    this.filterDateFrom.set(value);
+  }
+
+  onFilterDateTo(value: string): void {
+    this.filterDateTo.set(value);
+  }
+
+  onSortBy(value: string): void {
+    this.sortBy.set(value);
+  }
+
   clearFilters(): void {
     this.taskSearch = '';
     this.filterStatus.set('');
     this.filterPriority.set('');
+    this.filterDateFrom.set('');
+    this.filterDateTo.set('');
+    this.sortBy.set('newest');
+  }
+
+  hasActiveFilters(): boolean {
+    return !!(this.taskSearch || this.filterStatus() || this.filterPriority() || this.filterDateFrom() || this.filterDateTo() || this.sortBy() !== 'newest');
   }
 
   getCount(status: TaskStatus): number {
@@ -197,20 +266,35 @@ export class ProjectDetailComponent implements OnInit {
 
   openCreateTask(): void {
     this.editingTask.set(null);
-    this.taskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '' };
+    this.taskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '', startDate: '', targetDate: '', endDate: '' };
     this.showTaskDialog.set(true);
   }
 
   openEditTask(task: Task): void {
     this.editingTask.set(task);
-    this.taskForm = { title: task.title, description: task.description || '', status: task.status, priority: task.priority, milestoneId: task.milestoneId || '' };
+    this.taskForm = {
+      title: task.title,
+      description: task.description || '',
+      status: task.status,
+      priority: task.priority,
+      milestoneId: task.milestoneId || '',
+      startDate: task.startDate ? task.startDate.split('T')[0] : '',
+      targetDate: task.targetDate ? task.targetDate.split('T')[0] : '',
+      endDate: task.endDate ? task.endDate.split('T')[0] : '',
+    };
     this.showTaskDialog.set(true);
   }
 
   closeTaskDialog(): void { this.showTaskDialog.set(false); this.editingTask.set(null); }
 
   saveTask(): void {
-    const data: Record<string, unknown> = { ...this.taskForm, projectId: this.projectId };
+    const data: Record<string, unknown> = {
+      ...this.taskForm,
+      projectId: this.projectId,
+      startDate: this.taskForm.startDate || null,
+      targetDate: this.taskForm.targetDate || null,
+      endDate: this.taskForm.endDate || null,
+    };
     const obs = this.editingTask()
       ? this.api.update('tasks', this.editingTask()!._id, data, 'Task updated')
       : this.api.create('tasks', data, 'Task created');

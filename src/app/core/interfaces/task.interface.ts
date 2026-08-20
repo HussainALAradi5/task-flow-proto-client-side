@@ -11,4 +11,9 @@ export interface Task extends BaseEntity {
   milestoneId?: string;
   assignTo?: string;
   lastAssignTo?: string;
+  startDate?: string;
+  targetDate?: string;
+  endDate?: string;
+  lastReviewedBy?: string;
+  lastReviewedAt?: string;
 }
