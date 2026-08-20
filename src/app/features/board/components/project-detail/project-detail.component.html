@@ -331,7 +331,13 @@
         @for (comment of comments(); track comment._id) {
           <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3.5">
             <div class="flex items-center justify-between mb-1.5">
-              <span class="text-xs text-gray-400">{{ comment.createdAt | date:'short' }}</span>
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                  <span class="text-white text-[10px] font-bold">{{ getUserName(comment.createdBy).charAt(0).toUpperCase() }}</span>
+                </div>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ getUserName(comment.createdBy) }}</span>
+                <span class="text-xs text-gray-400">· {{ comment.createdAt | date:'short' }}</span>
+              </div>
               @if (comment.createdBy === authService.currentUser()?._id) {
                 <button (click)="deleteComment(comment)" class="text-[10px] text-red-400 hover:text-red-600 font-medium">Delete</button>
               }
