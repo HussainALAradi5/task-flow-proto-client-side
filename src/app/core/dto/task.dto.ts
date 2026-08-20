@@ -1,4 +1,5 @@
-import { TaskStatus, TaskPriority } from '../models/task.model';
+import { TaskStatus } from '../enums/task-status.enum';
+import { TaskPriority } from '../enums/task-priority.enum';
 
 export interface CreateTaskRequest {
   title: string;

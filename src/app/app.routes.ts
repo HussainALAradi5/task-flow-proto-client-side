@@ -23,7 +23,7 @@ export const routes: Routes = [
     loadComponent: () => import('./features/board/components/board/board.component').then(m => m.BoardComponent),
   },
   {
-    path: 'board/:projectId',
+    path: 'board/:projectCode',
     canActivate: [authGuard],
     loadComponent: () => import('./features/board/components/project-detail/project-detail.component').then(m => m.ProjectDetailComponent),
   },

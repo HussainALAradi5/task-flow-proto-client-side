@@ -1,0 +1,104 @@
+<div class="p-6 max-w-full mx-auto">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div>
+      <a routerLink="/board" class="text-sm text-blue-600 hover:underline mb-1 inline-block">&larr; Back to Projects</a>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ project()?.title || 'Project' }}</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">{{ project()?.description }}</p>
+    </div>
+    <div class="flex gap-2">
+      <app-generic-button variant="outline" (onClick)="showMilestoneDialog.set(true)">+ Milestone</app-generic-button>
+      <app-generic-button (onClick)="openCreateTask()">+ Task</app-generic-button>
+    </div>
+  </div>
+
+  <!-- Kanban Board -->
+  <div class="flex gap-4 overflow-x-auto pb-4">
+    @for (col of columns; track col.status) {
+      <div class="flex-shrink-0 w-72 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 min-h-[300px]"
+        (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event, col.status)">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full" [class]="col.dotColor"></span>
+            <h3 class="font-semibold text-gray-700 dark:text-gray-300 text-sm">{{ col.label }}</h3>
+          </div>
+          <span class="text-xs text-gray-400 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+            {{ getCount(col.status) }}
+          </span>
+        </div>
+        <div class="space-y-3">
+          @for (task of getByStatus(col.status); track task._id) {
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 cursor-grab hover:shadow-md transition-shadow"
+              draggable="true" (dragstart)="onDragStart($event, task)" (click)="openEditTask(task)">
+              <div class="flex items-start justify-between mb-2">
+                <h4 class="font-medium text-gray-900 dark:text-white text-sm">{{ task.title }}</h4>
+                <button (click)="confirmDeleteTask(task); $event.stopPropagation()" class="text-gray-400 hover:text-red-500">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+              @if (task.description) {
+                <p class="text-gray-500 dark:text-gray-400 text-xs line-clamp-2 mb-2">{{ task.description }}</p>
+              }
+              <div class="flex items-center gap-2">
+                <app-generic-badge [variant]="getPriorityVariant(task.priority)">{{ task.priority }}</app-generic-badge>
+                @if (getMilestoneName(task.milestoneId); as name) {
+                  <span class="text-xs text-gray-400">{{ name }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Milestones -->
+  @if (milestones().length > 0) {
+    <div class="mt-8">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Milestones</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (m of milestones(); track m._id) {
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <div class="flex justify-between items-start">
+              <h4 class="font-medium text-gray-900 dark:text-white">{{ m.name }}</h4>
+              <div class="flex gap-1">
+                <button (click)="openEditMilestone(m)" class="p-1 text-gray-400 hover:text-blue-500">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
+                <button (click)="confirmDeleteMilestone(m)" class="p-1 text-gray-400 hover:text-red-500">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Task Dialog -->
+<app-generic-dialog [isOpen]="showTaskDialog()" [title]="editingTask() ? 'Edit Task' : 'New Task'" confirmText="Save" (onClose)="closeTaskDialog()" (onConfirm)="saveTask()">
+  <div class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+      <input [(ngModel)]="taskForm.title" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Task title" />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+      <textarea [(ngModel)]="taskForm.description" rows="2" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Optional"></textarea>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <app-generic-select label="Status" [options]="statusOptions" [value]="taskForm.status" (valueChange)="taskForm.status = $event" />
+      <app-generic-select label="Priority" [options]="priorityOptions" [value]="taskForm.priority" (valueChange)="taskForm.priority = $event" />
+    </div>
+    <app-generic-select label="Milestone" [options]="milestoneSelectOptions" [value]="taskForm.milestoneId" (valueChange)="taskForm.milestoneId = $event" placeholder="None" />
+  </div>
+</app-generic-dialog>
+
+<!-- Milestone Dialog -->
+<app-generic-dialog [isOpen]="showMilestoneDialog()" [title]="editingMilestone() ? 'Edit Milestone' : 'New Milestone'" confirmText="Save" (onClose)="closeMilestoneDialog()" (onConfirm)="saveMilestone()">
+  <div>
+    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+    <input [(ngModel)]="milestoneForm.name" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Milestone name" />
+  </div>
+</app-generic-dialog>
