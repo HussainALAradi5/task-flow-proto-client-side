@@ -10,8 +10,11 @@
     </app-generic-button>
   </div>
 
-  <div class="mb-6 max-w-md">
-    <app-generic-search placeholder="Search projects..." (search)="onSearch($event)" />
+  <div class="mb-6 flex items-center gap-4 max-w-lg">
+    <div class="flex-1">
+      <app-generic-search placeholder="Search projects..." (search)="onSearch($event)" />
+    </div>
+    <app-generic-switch label="Exact match" [checked]="exactMatch()" (checkedChange)="onExactMatchChange($event)" />
   </div>
 
   @if (loading()) {

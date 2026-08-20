@@ -12,13 +12,16 @@ export class BaseService {
   protected toast = inject(ToastService);
   protected baseUrl = environment.apiUrl;
 
-  getAll<T>(endpoint: string, params?: PaginationParams, search?: string): Observable<PaginatedResult<T>> {
+  getAll<T>(endpoint: string, params?: PaginationParams, search?: string, exactMatch?: boolean): Observable<PaginatedResult<T>> {
     let httpParams = new HttpParams();
     if (params) {
       httpParams = httpParams.set('page', params.page.toString()).set('limit', params.limit.toString());
     }
     if (search) {
       httpParams = httpParams.set('search', search);
+    }
+    if (exactMatch) {
+      httpParams = httpParams.set('exactMatch', 'true');
     }
     return this.http.get<PaginatedResult<T>>(`${this.baseUrl}/${endpoint}`, { params: httpParams });
   }

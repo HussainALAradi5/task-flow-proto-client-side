@@ -11,11 +11,12 @@ import { GenericButtonComponent } from '../../../../shared/components/generic-bu
 import { GenericDialogComponent } from '../../../../shared/components/generic-dialog/generic-dialog.component';
 import { GenericPaginationComponent } from '../../../../shared/components/generic-pagination/generic-pagination.component';
 import { GenericSearchComponent } from '../../../../shared/components/generic-search/generic-search.component';
+import { GenericSwitchComponent } from '../../../../shared/components/generic-switch/generic-switch.component';
 
 @Component({
   selector: 'app-board',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericPaginationComponent, GenericSearchComponent],
+  imports: [FormsModule, RouterLink, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericPaginationComponent, GenericSearchComponent, GenericSwitchComponent],
   templateUrl: './board.component.html',
 })
 export class BoardComponent implements OnInit {
@@ -28,6 +29,7 @@ export class BoardComponent implements OnInit {
   loading = signal(true);
   showDialog = signal(false);
   editingProject = signal<Project | null>(null);
+  exactMatch = signal(false);
   formData = { title: '', description: '' };
 
   ngOnInit(): void {
@@ -36,8 +38,8 @@ export class BoardComponent implements OnInit {
 
   loadProjects(): void {
     this.loading.set(true);
-    const { search, page, limit } = this.filter.getParams();
-    this.api.getAll<Project>('projects', { page, limit }, search || undefined).subscribe({
+    const { search, exactMatch, page, limit } = this.filter.getParams();
+    this.api.getAll<Project>('projects', { page, limit }, search || undefined, exactMatch).subscribe({
       next: (res) => {
         this.projects.set(res.data);
         this.pagination.set(res.pagination);
@@ -49,6 +51,12 @@ export class BoardComponent implements OnInit {
 
   onSearch(query: string): void {
     this.filter.setSearch(query);
+    this.loadProjects();
+  }
+
+  onExactMatchChange(exactMatch: boolean): void {
+    this.exactMatch.set(exactMatch);
+    this.filter.setExactMatch(exactMatch);
     this.loadProjects();
   }
 
