@@ -1,15 +1,17 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User, AuthResponse } from '../models/user.model';
 import { SignupRequest, LoginRequest } from '../dto/user.dto';
+import { ToastService } from './toast.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = `${environment.apiUrl}/users`;
   private readonly tokenKey = 'taskflow_token';
+  private toast = inject(ToastService);
 
   private currentUserSignal = signal<User | null>(null);
   readonly currentUser = this.currentUserSignal.asReadonly();
@@ -23,13 +25,27 @@ export class AuthService {
 
   signup(data: SignupRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/signup`, data).pipe(
-      tap((res) => this.setSession(res.token, res.data)),
+      tap((res) => {
+        this.setSession(res.token, res.data);
+        this.toast.success('Account created successfully!');
+      }),
+      catchError((err) => {
+        this.toast.error(err.error?.message || 'Signup failed');
+        return throwError(() => err);
+      }),
     );
   }
 
   login(data: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, data).pipe(
-      tap((res) => this.setSession(res.token, res.data)),
+      tap((res) => {
+        this.setSession(res.token, res.data);
+        this.toast.success('Welcome back!');
+      }),
+      catchError((err) => {
+        this.toast.error(err.error?.message || 'Login failed');
+        return throwError(() => err);
+      }),
     );
   }
 
@@ -41,7 +57,14 @@ export class AuthService {
 
   updateProfile(data: Partial<User>): Observable<{ status: string; data: User }> {
     return this.http.patch<{ status: string; data: User }>(`${this.apiUrl}/profile`, data).pipe(
-      tap((res) => this.currentUserSignal.set(res.data)),
+      tap((res) => {
+        this.currentUserSignal.set(res.data);
+        this.toast.success('Profile updated');
+      }),
+      catchError((err) => {
+        this.toast.error(err.error?.message || 'Update failed');
+        return throwError(() => err);
+      }),
     );
   }
 

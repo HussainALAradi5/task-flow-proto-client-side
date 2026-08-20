@@ -24,56 +24,28 @@ import { GenericPasswordInputComponent } from '../../../../shared/components/gen
           <form (submit)="onSubmit($event)" class="space-y-5">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
-              <input
-                type="text"
-                [(ngModel)]="userName"
-                name="userName"
-                required
+              <input type="text" [(ngModel)]="userName" name="userName" required
                 class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="johndoe"
-              />
+                placeholder="johndoe" />
             </div>
-
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-              <input
-                type="email"
-                [(ngModel)]="email"
-                name="email"
-                required
+              <input type="email" [(ngModel)]="email" name="email" required
                 class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="you@example.com"
-              />
+                placeholder="you@example.com" />
             </div>
-
-            <app-generic-password-input
-              id="signup-password"
-              label="Password"
-              placeholder="Min 6 characters"
-              [value]="password"
-              (valueChange)="password = $event"
-              [required]="true"
-            />
-
+            <app-generic-password-input id="signup-password" label="Password" placeholder="Min 6 characters"
+              [value]="password" (valueChange)="password = $event" [required]="true" />
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mobile Number</label>
-              <input
-                type="tel"
-                [(ngModel)]="mobileNumber"
-                name="mobileNumber"
+              <input type="tel" [(ngModel)]="mobileNumber" name="mobileNumber"
                 class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="+1234567890"
-              />
+                placeholder="+1234567890" />
             </div>
-
-            <app-generic-button type="submit" [loading]="loading()" class="w-full">
-              Create Account
-            </app-generic-button>
+            <app-generic-button type="submit" [loading]="loading()" class="w-full">Create Account</app-generic-button>
           </form>
-
           <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            Already have an account?
-            <a routerLink="/auth/login" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Sign in</a>
+            Already have an account? <a routerLink="/auth/login" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Sign in</a>
           </p>
         </div>
       </div>
@@ -83,7 +55,6 @@ import { GenericPasswordInputComponent } from '../../../../shared/components/gen
 export class SignupComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
-
   userName = '';
   email = '';
   password = '';
@@ -93,7 +64,6 @@ export class SignupComponent {
   onSubmit(event: Event): void {
     event.preventDefault();
     this.loading.set(true);
-
     this.authService.signup({ userName: this.userName, email: this.email, password: this.password, mobileNumber: this.mobileNumber }).subscribe({
       next: () => this.router.navigate(['/auth/login']),
       error: () => this.loading.set(false),

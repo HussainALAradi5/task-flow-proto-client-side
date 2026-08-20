@@ -20,37 +20,19 @@ import { GenericPasswordInputComponent } from '../../../../shared/components/gen
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome back</h1>
             <p class="text-gray-500 dark:text-gray-400 mt-2">Sign in to your account</p>
           </div>
-
           <form (submit)="onSubmit($event)" class="space-y-5">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-              <input
-                type="email"
-                [(ngModel)]="email"
-                name="email"
-                required
+              <input type="email" [(ngModel)]="email" name="email" required
                 class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="you@example.com"
-              />
+                placeholder="you@example.com" />
             </div>
-
-            <app-generic-password-input
-              id="login-password"
-              label="Password"
-              placeholder="Enter your password"
-              [value]="password"
-              (valueChange)="password = $event"
-              [required]="true"
-            />
-
-            <app-generic-button type="submit" [loading]="loading()" class="w-full">
-              Sign In
-            </app-generic-button>
+            <app-generic-password-input id="login-password" label="Password" placeholder="Enter your password"
+              [value]="password" (valueChange)="password = $event" [required]="true" />
+            <app-generic-button type="submit" [loading]="loading()" class="w-full">Sign In</app-generic-button>
           </form>
-
           <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            Don't have an account?
-            <a routerLink="/auth/signup" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Sign up</a>
+            Don't have an account? <a routerLink="/auth/signup" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Sign up</a>
           </p>
         </div>
       </div>
@@ -60,7 +42,6 @@ import { GenericPasswordInputComponent } from '../../../../shared/components/gen
 export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
-
   email = '';
   password = '';
   loading = signal(false);
@@ -68,7 +49,6 @@ export class LoginComponent {
   onSubmit(event: Event): void {
     event.preventDefault();
     this.loading.set(true);
-
     this.authService.login({ email: this.email, password: this.password }).subscribe({
       next: () => this.router.navigate(['/profile']),
       error: () => this.loading.set(false),
