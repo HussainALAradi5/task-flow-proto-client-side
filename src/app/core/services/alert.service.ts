@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { MessageType } from '../enums/message.enum';
-import { Alert } from '../models/toast.model';
+import { Alert } from '../models/alert.model';
 
 @Injectable({ providedIn: 'root' })
 export class AlertService {

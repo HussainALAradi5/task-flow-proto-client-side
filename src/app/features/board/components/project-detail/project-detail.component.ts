@@ -103,15 +103,12 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   loadProject(slug: string): void {
-    this.api.getAll<Project>('projects').subscribe({
+    this.api.getById<Project>('projects/slug', slug).subscribe({
       next: (res) => {
-        const found = res.data.find((p) => p.slug === slug || p.code === slug);
-        if (found) {
-          this.project.set(found);
-          this.projectId = found._id;
-          this.loadTasks();
-          this.loadMilestones();
-        }
+        this.project.set(res.data);
+        this.projectId = res.data._id;
+        this.loadTasks();
+        this.loadMilestones();
       },
     });
   }
@@ -312,6 +309,7 @@ export class ProjectDetailComponent implements OnInit {
       endDate: this.taskForm.endDate || null,
       deliveredDate: this.taskForm.deliveredDate || null,
     };
+    if (!this.taskForm.milestoneId) delete data['milestoneId'];
     const obs = this.editingTask()
       ? this.api.update('tasks', this.editingTask()!._id, data, 'Task updated')
       : this.api.create('tasks', data, 'Task created');

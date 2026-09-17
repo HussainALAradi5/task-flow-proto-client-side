@@ -1,4 +1,4 @@
-import { BaseEntity } from './base.interface';
+import { BaseEntity } from './base-entity.interface';
 import { UserRole } from '../enums/user-role.enum';
 
 export interface User extends BaseEntity {

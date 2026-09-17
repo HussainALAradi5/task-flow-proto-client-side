@@ -6,7 +6,7 @@ import { ApiService } from '../../../../core/services/api.service';
 import { FilterService } from '../../../../core/services/filter.service';
 import { AlertService } from '../../../../core/services/alert.service';
 import { Project } from '../../../../core/interfaces/project.interface';
-import { PaginationMeta } from '../../../../core/interfaces/base.interface';
+import { PaginationMeta } from '../../../../core/interfaces/pagination-meta.interface';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
 import { GenericDialogComponent } from '../../../../shared/components/generic-dialog/generic-dialog.component';
 import { GenericPaginationComponent } from '../../../../shared/components/generic-pagination/generic-pagination.component';

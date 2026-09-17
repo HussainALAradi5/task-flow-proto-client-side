@@ -1,4 +1,4 @@
-import { BaseEntity } from './base.interface';
+import { BaseEntity } from './base-entity.interface';
 import { EntityModelType } from '../enums/entity-model-type.enum';
 
 export interface Media extends BaseEntity {

@@ -6,14 +6,3 @@ export interface Toast {
   type: MessageType;
   duration: number;
 }
-
-export interface Alert {
-  id: string;
-  title?: string;
-  message: string;
-  type: MessageType;
-  confirmText?: string;
-  cancelText?: string;
-  onConfirm?: () => void;
-  onCancel?: () => void;
-}

@@ -11,8 +11,8 @@ export class ThemeService {
     this.loadTheme();
     effect(() => {
       const theme = this.themeSignal();
-      document.documentElement.classList.toggle('dark', theme === 'dark');
-      localStorage.setItem(this.themeKey, theme);
+      globalThis.document?.documentElement.classList.toggle('dark', theme === 'dark');
+      globalThis.localStorage?.setItem(this.themeKey, theme);
     });
   }
 
@@ -21,8 +21,8 @@ export class ThemeService {
   }
 
   private loadTheme(): void {
-    const saved = localStorage.getItem(this.themeKey) as 'light' | 'dark' | null;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const saved = globalThis.localStorage?.getItem(this.themeKey) as 'light' | 'dark' | null;
+    const prefersDark = globalThis.window?.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
     this.themeSignal.set(saved || (prefersDark ? 'dark' : 'light'));
   }
 }

@@ -1,4 +1,4 @@
-import { BaseEntity } from './base.interface';
+import { BaseEntity } from './base-entity.interface';
 
 export interface Milestone extends BaseEntity {
   name: string;

@@ -1,4 +1,4 @@
-import { BaseEntity } from './base.interface';
+import { BaseEntity } from './base-entity.interface';
 
 export interface Team extends BaseEntity {
   name: string;

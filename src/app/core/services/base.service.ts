@@ -2,7 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { PaginatedResult, PaginationParams } from '../models/pagination.model';
+import { PaginatedResult } from '../models/paginated-result.model';
+import { PaginationParams } from '../models/pagination-params.model';
 import { ApiResponse } from '../models/api-response.model';
 import { ToastService } from './toast.service';
 

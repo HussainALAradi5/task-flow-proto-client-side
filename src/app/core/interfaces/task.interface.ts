@@ -1,4 +1,4 @@
-import { BaseEntity } from './base.interface';
+import { BaseEntity } from './base-entity.interface';
 import { TaskStatus } from '../enums/task-status.enum';
 import { TaskPriority } from '../enums/task-priority.enum';
 

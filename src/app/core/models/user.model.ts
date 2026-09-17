@@ -7,15 +7,3 @@ export interface User extends BaseEntity {
   teamId?: string;
   role: 'Admin' | 'Leader' | 'Member';
 }
-
-export enum UserRole {
-  ADMIN = 'Admin',
-  LEADER = 'Leader',
-  MEMBER = 'Member',
-}
-
-export interface AuthResponse {
-  status: string;
-  token: string;
-  data: User;
-}
