@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { PaginatedResult } from '../models/paginated-result.model';
-import { PaginationParams } from '../models/pagination-params.model';
-import { ApiResponse } from '../models/api-response.model';
+import { PaginatedResult } from '../interfaces/paginated-result.interface';
+import { PaginationParams } from '../interfaces/pagination-params.interface';
+import { ApiResponse } from '../interfaces/api-response.interface';
 import { ToastService } from './toast.service';
 
 @Injectable({ providedIn: 'root' })
@@ -34,7 +34,7 @@ export class BaseService {
     return this.http.get<ApiResponse<T>>(`${this.baseUrl}/${endpoint}/${id}`);
   }
 
-  create<T>(endpoint: string, data: Partial<T>, successMsg?: string): Observable<ApiResponse<T>> {
+  create<T>(endpoint: string, data: object, successMsg?: string): Observable<ApiResponse<T>> {
     return this.http.post<ApiResponse<T>>(`${this.baseUrl}/${endpoint}`, data).pipe(
       tap({
         next: () => { if (successMsg) this.toast.success(successMsg); },
@@ -43,7 +43,7 @@ export class BaseService {
     );
   }
 
-  update<T>(endpoint: string, id: string, data: Partial<T>, successMsg?: string): Observable<ApiResponse<T>> {
+  update<T>(endpoint: string, id: string, data: object, successMsg?: string): Observable<ApiResponse<T>> {
     return this.http.patch<ApiResponse<T>>(`${this.baseUrl}/${endpoint}/${id}`, data).pipe(
       tap({
         next: () => { if (successMsg) this.toast.success(successMsg); },

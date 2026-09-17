@@ -2,9 +2,9 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
-import { ApiService } from '../../../../core/services/api.service';
 import { FilterService } from '../../../../core/services/filter.service';
 import { AlertService } from '../../../../core/services/alert.service';
+import { ProjectService } from '../../services/project';
 import { Project } from '../../../../core/interfaces/project.interface';
 import { PaginationMeta } from '../../../../core/interfaces/pagination-meta.interface';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
@@ -20,7 +20,7 @@ import { GenericSwitchComponent } from '../../../../shared/components/generic-sw
   templateUrl: './board.component.html',
 })
 export class BoardComponent implements OnInit {
-  private api = inject(ApiService);
+  private projectsApi = inject(ProjectService);
   private alert = inject(AlertService);
   private filter = inject(FilterService);
 
@@ -40,7 +40,7 @@ export class BoardComponent implements OnInit {
   loadProjects(): void {
     this.loading.set(true);
     const { search, exactMatch, page, limit } = this.filter.getParams();
-    this.api.getAll<Project>('projects', { page, limit }, search || undefined, exactMatch, this.showDeleted()).subscribe({
+    this.projectsApi.getAll({ page, limit }, search || undefined, exactMatch, this.showDeleted()).subscribe({
       next: (res) => {
         this.projects.set(res.data);
         this.pagination.set(res.pagination);
@@ -90,14 +90,14 @@ export class BoardComponent implements OnInit {
 
   saveProject(): void {
     const obs = this.editingProject()
-      ? this.api.update('projects', this.editingProject()!._id, this.formData, 'Project updated')
-      : this.api.create('projects', this.formData, 'Project created');
+      ? this.projectsApi.update(this.editingProject()!._id, this.formData)
+      : this.projectsApi.create(this.formData);
     obs.subscribe({ next: () => { this.loadProjects(); this.closeDialog(); } });
   }
 
   confirmDelete(project: Project): void {
     this.alert.confirm(`Delete "${project.title}"?`, () => {
-      this.api.delete('projects', project._id, 'Project deleted').subscribe({ next: () => this.loadProjects() });
+      this.projectsApi.delete(project._id).subscribe({ next: () => this.loadProjects() });
     }, 'Delete Project');
   }
 }

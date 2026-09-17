@@ -3,8 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { User } from '../models/user.model';
-import { AuthResponse } from '../models/auth-response.model';
+import { User } from '../interfaces/user.interface';
+import { AuthResponse } from '../interfaces/auth-response.interface';
 import { SignupRequest, LoginRequest } from '../dto/user.dto';
 import { ToastService } from './toast.service';
 

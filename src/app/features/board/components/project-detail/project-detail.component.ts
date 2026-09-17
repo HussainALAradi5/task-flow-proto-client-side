@@ -2,7 +2,6 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
-import { ApiService } from '../../../../core/services/api.service';
 import { FilterService } from '../../../../core/services/filter.service';
 import { AlertService } from '../../../../core/services/alert.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -21,6 +20,10 @@ import { GenericSelectComponent } from '../../../../shared/components/generic-se
 import { GenericBadgeSelectComponent } from '../../../../shared/components/generic-badge-select/generic-badge-select.component';
 import { GenericSearchComponent } from '../../../../shared/components/generic-search/generic-search.component';
 import { GenericSwitchComponent } from '../../../../shared/components/generic-switch/generic-switch.component';
+import { ProjectService } from '../../services/project';
+import { TaskService } from '../../services/task';
+import { MilestoneService } from '../../services/milestone';
+import { CommentService } from '../../services/comment';
 
 interface TaskForm {
   title: string;
@@ -41,7 +44,10 @@ interface TaskForm {
   templateUrl: './project-detail.component.html',
 })
 export class ProjectDetailComponent implements OnInit {
-  private api = inject(ApiService);
+  private projectsApi = inject(ProjectService);
+  private tasksApi = inject(TaskService);
+  private milestonesApi = inject(MilestoneService);
+  private commentsApi = inject(CommentService);
   private alert = inject(AlertService);
   private route = inject(ActivatedRoute);
   private filter = inject(FilterService);
@@ -103,7 +109,7 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   loadProject(slug: string): void {
-    this.api.getById<Project>('projects/slug', slug).subscribe({
+    this.projectsApi.getBySlug(slug).subscribe({
       next: (res) => {
         this.project.set(res.data);
         this.projectId = res.data._id;
@@ -114,7 +120,7 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   loadTasks(): void {
-    this.api.getAll<Task>(`tasks/project/${this.projectId}`, undefined, undefined, undefined, this.showDeleted()).subscribe({ next: (res) => this.tasks.set(res.data) });
+    this.tasksApi.getByProject(this.projectId, this.showDeleted()).subscribe({ next: (res) => this.tasks.set(res.data) });
   }
 
   onToggleDeleted(show: boolean): void {
@@ -123,7 +129,7 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   loadMilestones(): void {
-    this.api.getAll<Milestone>(`milestones/project/${this.projectId}`).subscribe({
+    this.milestonesApi.getByProject(this.projectId).subscribe({
       next: (res) => {
         this.milestones.set(res.data);
         this.milestoneSelectOptions = res.data.map((m) => ({ value: m._id, label: m.name }));
@@ -132,7 +138,7 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   loadComments(taskId: string): void {
-    this.api.getAll<Comment>(`comments/task/${taskId}`).subscribe({ next: (res) => this.comments.set(res.data) });
+    this.commentsApi.getByTask(taskId).subscribe({ next: (res) => this.comments.set(res.data) });
   }
 
   getUserName(user?: string | Record<string, unknown>): string {
@@ -266,7 +272,7 @@ export class ProjectDetailComponent implements OnInit {
     event.preventDefault();
     const task = this.draggedTask();
     if (task && task.status !== newStatus) {
-      this.api.update('tasks', task._id, { status: newStatus }, 'Task moved').subscribe({
+      this.tasksApi.move(task._id, { status: newStatus }).subscribe({
         next: () => this.tasks.update((ts) => ts.map((t) => (t._id === task._id ? { ...t, status: newStatus } : t))),
       });
     }
@@ -301,24 +307,24 @@ export class ProjectDetailComponent implements OnInit {
   closeTaskDialog(): void { this.showTaskDialog.set(false); this.editingTask.set(null); }
 
   saveTask(): void {
-    const data: Record<string, unknown> = {
+    const data = {
       ...this.taskForm,
       projectId: this.projectId,
+      milestoneId: this.taskForm.milestoneId || undefined,
       startDate: this.taskForm.startDate || null,
       targetDate: this.taskForm.targetDate || null,
       endDate: this.taskForm.endDate || null,
       deliveredDate: this.taskForm.deliveredDate || null,
     };
-    if (!this.taskForm.milestoneId) delete data['milestoneId'];
     const obs = this.editingTask()
-      ? this.api.update('tasks', this.editingTask()!._id, data, 'Task updated')
-      : this.api.create('tasks', data, 'Task created');
+      ? this.tasksApi.update(this.editingTask()!._id, data)
+      : this.tasksApi.create(data);
     obs.subscribe({ next: () => { this.loadTasks(); this.closeTaskDialog(); } });
   }
 
   confirmDeleteTask(task: Task): void {
     this.alert.confirm(`Delete "${task.title}"?`, () => {
-      this.api.delete('tasks', task._id, 'Task deleted').subscribe({ next: () => this.loadTasks() });
+      this.tasksApi.delete(task._id).subscribe({ next: () => this.loadTasks() });
     }, 'Delete Task');
   }
 
@@ -336,13 +342,13 @@ export class ProjectDetailComponent implements OnInit {
 
   addComment(): void {
     if (!this.newComment.trim() || !this.selectedTask()) return;
-    this.api.create('comments', { content: this.newComment, taskId: this.selectedTask()!._id }, 'Comment added').subscribe({
+    this.commentsApi.create({ content: this.newComment, taskId: this.selectedTask()!._id }).subscribe({
       next: () => { this.loadComments(this.selectedTask()!._id); this.newComment = ''; },
     });
   }
 
   deleteComment(comment: Comment): void {
-    this.api.delete('comments', comment._id, 'Comment deleted').subscribe({
+    this.commentsApi.delete(comment._id).subscribe({
       next: () => this.loadComments(this.selectedTask()!._id),
     });
   }
@@ -356,16 +362,16 @@ export class ProjectDetailComponent implements OnInit {
   closeMilestoneDialog(): void { this.showMilestoneDialog.set(false); this.editingMilestone.set(null); }
 
   saveMilestone(): void {
-    const data: Record<string, unknown> = { ...this.milestoneForm, projectId: this.projectId };
+    const data = { ...this.milestoneForm, projectId: this.projectId };
     const obs = this.editingMilestone()
-      ? this.api.update('milestones', this.editingMilestone()!._id, data, 'Milestone updated')
-      : this.api.create('milestones', data, 'Milestone created');
+      ? this.milestonesApi.update(this.editingMilestone()!._id, data)
+      : this.milestonesApi.create(data);
     obs.subscribe({ next: () => { this.loadMilestones(); this.closeMilestoneDialog(); } });
   }
 
   confirmDeleteMilestone(m: Milestone): void {
     this.alert.confirm(`Delete "${m.name}"?`, () => {
-      this.api.delete('milestones', m._id, 'Milestone deleted').subscribe({ next: () => this.loadMilestones() });
+      this.milestonesApi.delete(m._id).subscribe({ next: () => this.loadMilestones() });
     }, 'Delete Milestone');
   }
 }

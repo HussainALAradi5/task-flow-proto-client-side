@@ -1,15 +1,14 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { GenericButtonComponent } from '../../shared/components/generic-button/generic-button.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, GenericButtonComponent],
+  imports: [],
   template: `
     <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-10">
         <div class="text-center">
           <div class="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-blue-500/30">
             <span class="text-white font-bold text-3xl">TF</span>
@@ -17,20 +16,12 @@ import { GenericButtonComponent } from '../../shared/components/generic-button/g
           <h1 class="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6">
             Manage projects<br/><span class="text-blue-600">with ease</span>
           </h1>
-          <p class="text-xl text-gray-500 dark:text-gray-400 mb-10 max-w-2xl mx-auto">
+          <p class="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
             Organize tasks, collaborate with teams, and ship faster with TaskFlow.
           </p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            @if (!authService.isLoggedIn()) {
-              <a routerLink="/auth/signup"><app-generic-button size="lg">Get Started Free</app-generic-button></a>
-              <a routerLink="/auth/login"><app-generic-button variant="outline" size="lg">Sign In</app-generic-button></a>
-            } @else {
-              <a routerLink="/board"><app-generic-button size="lg">Go to Dashboard</app-generic-button></a>
-            }
-          </div>
         </div>
       </div>
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div class="text-center mb-16">
           <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Everything you need</h2>
           <p class="text-gray-500 dark:text-gray-400 mt-2">Powerful features to manage your projects</p>

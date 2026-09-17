@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { PaginationMeta } from '../../../core/models/pagination-meta.model';
+import { PaginationMeta } from '../../../core/interfaces/pagination-meta.interface';
 
 @Component({
   selector: 'app-generic-pagination',

@@ -1,7 +1,7 @@
-import { User } from './user.model';
+import { User } from './user.interface';
 
 export interface AuthResponse {
-  status: string;
+  status: 'success';
   token: string;
   data: User;
 }

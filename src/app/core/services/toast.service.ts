@@ -1,12 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { MessageType } from '../enums/message.enum';
-
-export interface Toast {
-  id: string;
-  message: string;
-  type: MessageType;
-  duration: number;
-}
+import { Toast } from '../interfaces/toast.interface';
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {

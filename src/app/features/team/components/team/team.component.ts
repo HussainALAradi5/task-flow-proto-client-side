@@ -1,9 +1,9 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
-import { ApiService } from '../../../../core/services/api.service';
 import { AlertService } from '../../../../core/services/alert.service';
-import { Team } from '../../../../core/models/team.model';
+import { TeamService } from '../../services/team';
+import { Team } from '../../../../core/interfaces/team.interface';
 import { PaginationMeta } from '../../../../core/interfaces/pagination-meta.interface';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
 import { GenericDialogComponent } from '../../../../shared/components/generic-dialog/generic-dialog.component';
@@ -106,7 +106,7 @@ import { GenericPaginationComponent } from '../../../../shared/components/generi
   `,
 })
 export class TeamComponent implements OnInit {
-  private api = inject(ApiService);
+  private teamsApi = inject(TeamService);
   private alert = inject(AlertService);
 
   teams = signal<Team[]>([]);
@@ -122,7 +122,7 @@ export class TeamComponent implements OnInit {
 
   loadTeams(page: number): void {
     this.loading.set(true);
-    this.api.getAll<Team>('teams', { page, limit: 9 }).subscribe({
+    this.teamsApi.getAll(page).subscribe({
       next: (res) => {
         this.teams.set(res.data);
         this.pagination.set(res.pagination);
@@ -151,14 +151,14 @@ export class TeamComponent implements OnInit {
 
   saveTeam(): void {
     if (this.editingTeam()) {
-      this.api.update('teams', this.editingTeam()!._id, this.formData, 'Team updated').subscribe({
+      this.teamsApi.update(this.editingTeam()!._id, this.formData).subscribe({
         next: () => {
           this.loadTeams(1);
           this.closeDialog();
         },
       });
     } else {
-      this.api.create('teams', this.formData, 'Team created').subscribe({
+      this.teamsApi.create(this.formData).subscribe({
         next: () => {
           this.loadTeams(1);
           this.closeDialog();
@@ -171,7 +171,7 @@ export class TeamComponent implements OnInit {
     this.alert.confirm(
       `Delete "${team.name}"? This action cannot be undone.`,
       () => {
-        this.api.delete('teams', team._id, 'Team deleted').subscribe({
+        this.teamsApi.delete(team._id).subscribe({
           next: () => this.loadTeams(1),
         });
       },
