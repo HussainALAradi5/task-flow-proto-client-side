@@ -1,8 +1,9 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = localStorage.getItem('taskflow_token');
-  if (token) {
+  if (token && req.url.startsWith(`${environment.apiUrl}/`)) {
     req = req.clone({
       setHeaders: { Authorization: `Bearer ${token}` },
     });

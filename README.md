@@ -1,59 +1,68 @@
-# TaskFlowProtoClientSide
+# TaskFlow client
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.6.
+Angular 21 client for a Trello-like project board. Boards contain four task columns (To Do, In Progress, In Review, Done), milestones, comments, progress bars, and an ordered activity history. Desktop users can drag cards between columns. Opening a card also lets users change its status, including on touch devices.
 
-## Development server
+## Start locally (PowerShell)
 
-To start a local development server, run:
+Keep the [client](https://github.com/HussainALAradi5/task-flow-proto-client-side), [server](https://github.com/HussainALAradi5/task-flow-proto-server-side), and [documentation](https://github.com/HussainALAradi5/task-flow-proto-documenation) repositories side by side. Use Node.js 24 LTS and a reachable MongoDB database.
 
-```bash
-ng serve
+```powershell
+# Terminal 1, from the server repository
+npm ci
+Copy-Item .env.example .env
+# Edit .env: MONGO_URI and JWT_SECRET are required.
+npm run dev
+
+# Terminal 2, from the client repository
+npm ci
+npm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Open <http://localhost:4200>. The development client uses `http://localhost:5000/api` in `src/environments/environment.ts`; keep the server at port 5000 or change that URL. See the [server README](https://github.com/HussainALAradi5/task-flow-proto-server-side#start-locally-powershell) for database setup and the demo seed. For a production build, configure the deployed API URL in `src/environments/environment.prod.ts` before building.
 
-## Code scaffolding
+## Demo users
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Run `npm run seed:demo` in the server repository as described in its README. The script requires `DEMO_SEED=1` and a password of at least 12 characters supplied with `DEMO_SEED_PASSWORD`. All accounts use that chosen password.
 
-```bash
-ng generate component component-name
+| Login email | Role | Group and access |
+| --- | --- | --- |
+| `demo-admin@taskflow.local` | Admin | Can see all teams and boards; owns Operations Group |
+| `demo@taskflow.local` | Leader | Owns Product Studio and its three sample boards |
+| `demo-member@taskflow.local` | Member | Member of Operations Group and its Operations Board; cannot see Product Studio boards |
+
+The login form also accepts `demo_admin`, `demo_leader`, or `demo_member` as the identifier. The Operations Board has a card created by the Admin so you can verify that a Member can move and comment on another user's card.
+
+## Board behavior and access
+
+Project boards and team lists are scoped to ownership or explicit membership. Members can read their board's milestones and activity, and create, move, edit, and comment on cards there. Leaders or Admins manage milestones; board and team edits require the owner or Admin. The server enforces these rules. Each board shows recent activity in reverse time order and can load older events. Actions write history on the server; clients cannot create audit events directly.
+
+The progress bar shared component displays board and milestone completion. The shared UI library also includes button, card, dialog, loading, search, select, badge select, badge, switch, pagination, input, password input, alert, toast, table, file upload, drag drop, and access control components. `generic-progress-bar` accepts `label`, a 0–100 `value`, `size`, and `tone`:
+
+```html
+<app-generic-progress-bar label="Board completion" [value]="progressPercent()" size="sm" tone="mixed" />
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Screenshots
 
-```bash
-ng generate --help
+These screenshots were captured from the Angular client with mocked API responses representing the demo seed. They verify client rendering. A live MongoDB end-to-end run is still needed.
+
+![Login](screenshots/login.png)
+![Projects dashboard](screenshots/projects-dashboard.png)
+![Kanban board](screenshots/kanban-board.png)
+![Card moved between columns](screenshots/kanban-card-moved.png)
+![Activity history](screenshots/activity-history.png)
+![Task details](screenshots/task-details.png)
+![Dark mode](screenshots/dark-mode.png)
+![Teams](screenshots/teams.png)
+![Mobile projects](screenshots/projects-mobile.png)
+![Member group and board](screenshots/member-group.png)
+![Member commenting on a shared board](screenshots/member-board.png)
+
+## Checks
+
+```powershell
+npm run build
+npm test
 ```
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+See the [contract verification](https://github.com/HussainALAradi5/task-flow-proto-documenation/blob/main/contract-verification.md) for API route and role details.

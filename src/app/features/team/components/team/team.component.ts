@@ -5,14 +5,16 @@ import { AlertService } from '../../../../core/services/alert.service';
 import { TeamService } from '../../services/team';
 import { Team } from '../../../../core/interfaces/team.interface';
 import { PaginationMeta } from '../../../../core/interfaces/pagination-meta.interface';
+import { AuthService } from '../../../../core/services/auth.service';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
 import { GenericDialogComponent } from '../../../../shared/components/generic-dialog/generic-dialog.component';
 import { GenericPaginationComponent } from '../../../../shared/components/generic-pagination/generic-pagination.component';
+import { GenericLoadingComponent } from '../../../../shared/components/generic-loading/generic-loading.component';
 
 @Component({
   selector: 'app-team',
   standalone: true,
-  imports: [FormsModule, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericPaginationComponent],
+  imports: [FormsModule, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericPaginationComponent, GenericLoadingComponent],
   template: `
     <div class="p-6 max-w-7xl mx-auto">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -20,18 +22,18 @@ import { GenericPaginationComponent } from '../../../../shared/components/generi
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Teams</h1>
           <p class="text-gray-500 dark:text-gray-400 mt-1">Manage your teams</p>
         </div>
+        @if (auth.isAdmin() || auth.isLeader()) {
         <app-generic-button (onClick)="openCreateDialog()">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
           New Team
         </app-generic-button>
+        }
       </div>
 
       @if (loading()) {
-        <div class="flex justify-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
+        <app-generic-loading label="Loading teams" />
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (team of teams(); track team._id) {
@@ -39,16 +41,20 @@ import { GenericPaginationComponent } from '../../../../shared/components/generi
               <div class="flex justify-between items-start mb-4">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ team.name }}</h3>
                 <div class="flex gap-2">
+                  @if (auth.isAdmin() || auth.isLeader()) {
                   <button (click)="openEditDialog(team)" class="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
+                  }
+                  @if (auth.isAdmin()) {
                   <button (click)="confirmDelete(team)" class="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
+                  }
                 </div>
               </div>
               <p class="text-gray-500 dark:text-gray-400 text-sm line-clamp-2">{{ team.description || 'No description' }}</p>
@@ -63,7 +69,9 @@ import { GenericPaginationComponent } from '../../../../shared/components/generi
               </svg>
               <h3 class="text-gray-900 dark:text-white font-medium mb-1">No teams yet</h3>
               <p class="text-gray-500 dark:text-gray-400 mb-4">Create a team to collaborate with others</p>
-              <app-generic-button (onClick)="openCreateDialog()">Create Team</app-generic-button>
+              @if (auth.isAdmin() || auth.isLeader()) {
+                <app-generic-button (onClick)="openCreateDialog()">Create Team</app-generic-button>
+              }
             </div>
           }
         </div>
@@ -108,6 +116,7 @@ import { GenericPaginationComponent } from '../../../../shared/components/generi
 export class TeamComponent implements OnInit {
   private teamsApi = inject(TeamService);
   private alert = inject(AlertService);
+  auth = inject(AuthService);
 
   teams = signal<Team[]>([]);
   pagination = signal<PaginationMeta | null>(null);

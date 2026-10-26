@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, expand, EMPTY, reduce, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PaginatedResult } from '../interfaces/paginated-result.interface';
 import { PaginationParams } from '../interfaces/pagination-params.interface';
@@ -28,6 +28,17 @@ export class BaseService {
       httpParams = httpParams.set('includeInactive', 'true');
     }
     return this.http.get<PaginatedResult<T>>(`${this.baseUrl}/${endpoint}`, { params: httpParams });
+  }
+
+  getAllPages<T>(endpoint: string, includeInactive = false): Observable<T[]> {
+    const limit = 100;
+    return this.getAll<T>(endpoint, { page: 1, limit }, undefined, undefined, includeInactive).pipe(
+      expand((response) => response.pagination.page < response.pagination.totalPages
+        ? this.getAll<T>(endpoint, { page: response.pagination.page + 1, limit }, undefined, undefined, includeInactive)
+        : EMPTY),
+      map((response) => response.data),
+      reduce((items, page) => [...items, ...page], [] as T[]),
+    );
   }
 
   getById<T>(endpoint: string, id: string): Observable<ApiResponse<T>> {

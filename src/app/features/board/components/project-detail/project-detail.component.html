@@ -15,10 +15,12 @@
           }
         </div>
         <div class="flex gap-3">
+          @if (canManageMilestones()) {
           <app-generic-button variant="outline" (onClick)="showMilestoneDialog.set(true)">
             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
             Milestone
           </app-generic-button>
+          }
           <app-generic-button (onClick)="openCreateTask()">
             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Task
@@ -45,9 +47,7 @@
         <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Progress</div>
         <div class="flex items-center gap-3">
           <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ progressPercent() }}%</div>
-          <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500" [style.width.%]="progressPercent()"></div>
-          </div>
+          <app-generic-progress-bar class="flex-1" label="Project progress" [value]="progressPercent()" />
         </div>
       </div>
     </div>
@@ -105,6 +105,7 @@
     </div>
 
     <!-- Kanban Board -->
+    <p class="mb-3 text-sm text-gray-500 dark:text-gray-400">Drag cards between columns, or open a card to change its status.</p>
     <div class="flex gap-5 overflow-x-auto pb-6 -mx-2 px-2">
       @for (col of columns; track col.status) {
         <div class="flex-shrink-0 w-[320px] rounded-2xl border {{ col.border }} {{ col.bg }} p-4 min-h-[400px] transition-colors"
@@ -121,7 +122,7 @@
           <div class="space-y-3">
             @for (task of getByStatus(col.status); track task._id) {
               <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700 cursor-grab hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-900/50 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 group"
-                draggable="true" (dragstart)="onDragStart($event, task)" (click)="openEditTask(task)">
+                draggable="true" (dragstart)="onDragStart($event, task)" (dragend)="onDragEnd()" (click)="openEditTask(task)">
                 <!-- Title + Actions -->
                 <div class="flex items-start justify-between mb-2.5">
                   <h4 class="font-semibold text-gray-900 dark:text-white text-sm leading-snug pr-2">{{ task.title }}</h4>
@@ -210,6 +211,7 @@
                       <p class="text-[11px] text-gray-400 mt-0.5">{{ getMilestoneCompletedCount(m._id) }}/{{ getMilestoneTaskCount(m._id) }} tasks done</p>
                     </div>
                   </div>
+                  @if (canManageMilestones()) {
                   <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button (click)="openEditMilestone(m)" class="p-1.5 text-gray-400 hover:text-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -218,26 +220,57 @@
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                   </div>
+                  }
+
                 </div>
               </div>
               <!-- Progress Bar -->
               <div class="px-5 pb-5">
-                @if (getMilestoneTaskCount(m._id) > 0) {
-                  <div class="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-500"
-                      [style.width.%]="getMilestoneCompletedCount(m._id) / getMilestoneTaskCount(m._id) * 100"></div>
-                  </div>
-                } @else {
-                  <div class="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full">
-                    <div class="h-full w-0"></div>
-                  </div>
-                }
+                <app-generic-progress-bar [label]="m.name + ' progress'" [value]="getMilestoneProgress(m._id)" size="sm" tone="mixed" />
               </div>
             </div>
           }
         </div>
       </div>
     }
+    <section aria-labelledby="activity-heading" class="mt-10 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <div class="mb-5 flex items-center justify-between gap-4">
+        <div>
+          <h2 id="activity-heading" class="text-xl font-bold text-gray-900 dark:text-white">Activity history</h2>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Project, milestone, task, and comment changes in time order.</p>
+        </div>
+        <button type="button" (click)="loadHistory()" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">Refresh</button>
+      </div>
+      @if (historyError()) {
+        <p role="alert" class="mb-4 text-sm text-red-600 dark:text-red-400">{{ historyError() }}</p>
+      }
+      @if (historyLoading() && history().length === 0) {
+        <app-generic-loading label="Loading activity history" />
+      } @else {
+        <ol class="space-y-4">
+          @for (event of history(); track event._id) {
+            <li class="flex gap-4 border-l-2 border-blue-200 pl-4 dark:border-blue-800">
+              <span aria-hidden="true" class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500"></span>
+              <div class="min-w-0 flex-1">
+                <p class="font-medium text-gray-900 dark:text-white">{{ event.title }}</p>
+                @if (event.description) {
+                  <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">{{ event.description }}</p>
+                }
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {{ event.createdBy ? getUserName(event.createdBy) : 'System' }} ·
+                  <time [attr.datetime]="event.createdAt">{{ event.createdAt | date:'medium' }}</time>
+                </p>
+              </div>
+            </li>
+          } @empty {
+            <li class="text-sm text-gray-500 dark:text-gray-400">No activity recorded yet.</li>
+          }
+        </ol>
+        @if (historyPagination() && historyPagination()!.page < historyPagination()!.totalPages) {
+          <button type="button" (click)="loadHistory(false)" [disabled]="historyLoading()" class="mt-6 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">Load older activity</button>
+        }
+      }
+    </section>
   </div>
 </div>
 
@@ -338,7 +371,7 @@
                 <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ getUserName(comment.createdBy) }}</span>
                 <span class="text-xs text-gray-400">· {{ comment.createdAt | date:'short' }}</span>
               </div>
-              @if (comment.createdBy === authService.currentUser()?._id) {
+              @if (canDeleteComment(comment)) {
                 <button (click)="deleteComment(comment)" class="text-[10px] text-red-400 hover:text-red-600 font-medium">Delete</button>
               }
             </div>

@@ -9,6 +9,9 @@ import { Project } from '../../../../core/interfaces/project.interface';
 import { Task } from '../../../../core/interfaces/task.interface';
 import { Milestone } from '../../../../core/interfaces/milestone.interface';
 import { Comment } from '../../../../core/interfaces/comment.interface';
+import { ActivityEvent } from '../../../../core/interfaces/event.interface';
+import { PaginationMeta } from '../../../../core/interfaces/pagination-meta.interface';
+import { ApiService } from '../../../../core/services/api.service';
 import { TaskStatus, TASK_STATUS_OPTIONS } from '../../../../core/enums/task-status.enum';
 import { TaskPriority, TASK_PRIORITY_OPTIONS } from '../../../../core/enums/task-priority.enum';
 import { SelectOption } from '../../../../shared/components/generic-select/generic-select.component';
@@ -24,6 +27,8 @@ import { ProjectService } from '../../services/project';
 import { TaskService } from '../../services/task';
 import { MilestoneService } from '../../services/milestone';
 import { CommentService } from '../../services/comment';
+import { GenericProgressBarComponent } from '../../../../shared/components/generic-progress-bar/generic-progress-bar.component';
+import { GenericLoadingComponent } from '../../../../shared/components/generic-loading/generic-loading.component';
 
 interface TaskForm {
   title: string;
@@ -40,10 +45,11 @@ interface TaskForm {
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [RouterLink, FormsModule, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericBadgeComponent, GenericSelectComponent, GenericBadgeSelectComponent, GenericSearchComponent, GenericSwitchComponent],
+  imports: [RouterLink, FormsModule, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericBadgeComponent, GenericSelectComponent, GenericBadgeSelectComponent, GenericSearchComponent, GenericSwitchComponent, GenericProgressBarComponent, GenericLoadingComponent],
   templateUrl: './project-detail.component.html',
 })
 export class ProjectDetailComponent implements OnInit {
+  private api = inject(ApiService);
   private projectsApi = inject(ProjectService);
   private tasksApi = inject(TaskService);
   private milestonesApi = inject(MilestoneService);
@@ -57,6 +63,10 @@ export class ProjectDetailComponent implements OnInit {
   tasks = signal<Task[]>([]);
   milestones = signal<Milestone[]>([]);
   comments = signal<Comment[]>([]);
+  history = signal<ActivityEvent[]>([]);
+  historyPagination = signal<PaginationMeta | null>(null);
+  historyLoading = signal(false);
+  historyError = signal('');
   selectedTask = signal<Task | null>(null);
   projectId = '';
 
@@ -115,12 +125,13 @@ export class ProjectDetailComponent implements OnInit {
         this.projectId = res.data._id;
         this.loadTasks();
         this.loadMilestones();
+        this.loadHistory();
       },
     });
   }
 
   loadTasks(): void {
-    this.tasksApi.getByProject(this.projectId, this.showDeleted()).subscribe({ next: (res) => this.tasks.set(res.data) });
+    this.api.getAllPages<Task>(`tasks/project/${this.projectId}`, this.showDeleted()).subscribe({ next: (tasks) => this.tasks.set(tasks) });
   }
 
   onToggleDeleted(show: boolean): void {
@@ -129,16 +140,35 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   loadMilestones(): void {
-    this.milestonesApi.getByProject(this.projectId).subscribe({
-      next: (res) => {
-        this.milestones.set(res.data);
-        this.milestoneSelectOptions = res.data.map((m) => ({ value: m._id, label: m.name }));
+    this.api.getAllPages<Milestone>(`milestones/project/${this.projectId}`).subscribe({
+      next: (milestones) => {
+        this.milestones.set(milestones);
+        this.milestoneSelectOptions = milestones.map((m) => ({ value: m._id, label: m.name }));
       },
     });
   }
 
   loadComments(taskId: string): void {
-    this.commentsApi.getByTask(taskId).subscribe({ next: (res) => this.comments.set(res.data) });
+    this.api.getAllPages<Comment>(`comments/task/${taskId}`).subscribe({ next: (comments) => this.comments.set(comments) });
+  }
+
+  loadHistory(reset = true): void {
+    if (!this.projectId || this.historyLoading()) return;
+    const page = reset ? 1 : (this.historyPagination()?.page ?? 0) + 1;
+    if (!reset && page > (this.historyPagination()?.totalPages ?? 0)) return;
+    this.historyLoading.set(true);
+    this.historyError.set('');
+    this.api.getAll<ActivityEvent>(`events/project/${this.projectId}`, { page, limit: 10 }).subscribe({
+      next: (response) => {
+        this.history.set(reset ? response.data : [...this.history(), ...response.data]);
+        this.historyPagination.set(response.pagination);
+        this.historyLoading.set(false);
+      },
+      error: () => {
+        this.historyError.set('Could not load activity history.');
+        this.historyLoading.set(false);
+      },
+    });
   }
 
   getUserName(user?: string | Record<string, unknown>): string {
@@ -147,12 +177,32 @@ export class ProjectDetailComponent implements OnInit {
     return (user['userName'] as string) || 'Unknown';
   }
 
+  canManageMilestones(): boolean {
+    const current = this.authService.currentUser();
+    if (!current) return false;
+    return current.role === 'Admin' || (current.role === 'Leader' && this.recordUserId(this.project()?.createdBy) === current._id);
+  }
+
+  canDeleteComment(comment: Comment): boolean {
+    const current = this.authService.currentUser();
+    return !!current && (current.role === 'Admin' || this.recordUserId(comment.createdBy) === current._id);
+  }
+
+  private recordUserId(user?: string | Record<string, unknown>): string | undefined {
+    return typeof user === 'string' ? user : user?.['_id'] as string | undefined;
+  }
+
   getMilestoneTaskCount(milestoneId: string): number {
     return this.tasks().filter(t => t.milestoneId === milestoneId).length;
   }
 
   getMilestoneCompletedCount(milestoneId: string): number {
     return this.tasks().filter(t => t.milestoneId === milestoneId && t.status === TaskStatus.DONE).length;
+  }
+
+  getMilestoneProgress(milestoneId: string): number {
+    const total = this.getMilestoneTaskCount(milestoneId);
+    return total === 0 ? 0 : Math.round(this.getMilestoneCompletedCount(milestoneId) / total * 100);
   }
 
   isOverdue(task: Task): boolean {
@@ -258,22 +308,27 @@ export class ProjectDetailComponent implements OnInit {
 
   onDragStart(event: DragEvent, task: Task): void {
     this.draggedTask.set(task);
-    event.dataTransfer!.effectAllowed = 'move';
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
   }
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
-    event.dataTransfer!.dropEffect = 'move';
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
   }
 
   onDragLeave(_event: DragEvent): void {}
+
+  onDragEnd(): void { this.draggedTask.set(null); }
 
   onDrop(event: DragEvent, newStatus: TaskStatus): void {
     event.preventDefault();
     const task = this.draggedTask();
     if (task && task.status !== newStatus) {
       this.tasksApi.move(task._id, { status: newStatus }).subscribe({
-        next: () => this.tasks.update((ts) => ts.map((t) => (t._id === task._id ? { ...t, status: newStatus } : t))),
+        next: () => {
+          this.tasks.update((ts) => ts.map((t) => (t._id === task._id ? { ...t, status: newStatus } : t)));
+          this.loadHistory();
+        },
       });
     }
     this.draggedTask.set(null);
@@ -319,12 +374,12 @@ export class ProjectDetailComponent implements OnInit {
     const obs = this.editingTask()
       ? this.tasksApi.update(this.editingTask()!._id, data)
       : this.tasksApi.create(data);
-    obs.subscribe({ next: () => { this.loadTasks(); this.closeTaskDialog(); } });
+    obs.subscribe({ next: () => { this.loadTasks(); this.loadHistory(); this.closeTaskDialog(); } });
   }
 
   confirmDeleteTask(task: Task): void {
     this.alert.confirm(`Delete "${task.title}"?`, () => {
-      this.tasksApi.delete(task._id).subscribe({ next: () => this.loadTasks() });
+      this.tasksApi.delete(task._id).subscribe({ next: () => { this.loadTasks(); this.loadHistory(); } });
     }, 'Delete Task');
   }
 
@@ -343,13 +398,13 @@ export class ProjectDetailComponent implements OnInit {
   addComment(): void {
     if (!this.newComment.trim() || !this.selectedTask()) return;
     this.commentsApi.create({ content: this.newComment, taskId: this.selectedTask()!._id }).subscribe({
-      next: () => { this.loadComments(this.selectedTask()!._id); this.newComment = ''; },
+      next: () => { this.loadComments(this.selectedTask()!._id); this.loadHistory(); this.newComment = ''; },
     });
   }
 
   deleteComment(comment: Comment): void {
     this.commentsApi.delete(comment._id).subscribe({
-      next: () => this.loadComments(this.selectedTask()!._id),
+      next: () => { this.loadComments(this.selectedTask()!._id); this.loadHistory(); },
     });
   }
 
@@ -366,12 +421,12 @@ export class ProjectDetailComponent implements OnInit {
     const obs = this.editingMilestone()
       ? this.milestonesApi.update(this.editingMilestone()!._id, data)
       : this.milestonesApi.create(data);
-    obs.subscribe({ next: () => { this.loadMilestones(); this.closeMilestoneDialog(); } });
+    obs.subscribe({ next: () => { this.loadMilestones(); this.loadHistory(); this.closeMilestoneDialog(); } });
   }
 
   confirmDeleteMilestone(m: Milestone): void {
     this.alert.confirm(`Delete "${m.name}"?`, () => {
-      this.milestonesApi.delete(m._id).subscribe({ next: () => this.loadMilestones() });
+      this.milestonesApi.delete(m._id).subscribe({ next: () => { this.loadMilestones(); this.loadHistory(); } });
     }, 'Delete Milestone');
   }
 }

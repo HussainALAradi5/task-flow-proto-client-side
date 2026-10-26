@@ -5,6 +5,7 @@ import { DatePipe } from '@angular/common';
 import { FilterService } from '../../../../core/services/filter.service';
 import { AlertService } from '../../../../core/services/alert.service';
 import { ProjectService } from '../../services/project';
+import { AuthService } from '../../../../core/services/auth.service';
 import { Project } from '../../../../core/interfaces/project.interface';
 import { PaginationMeta } from '../../../../core/interfaces/pagination-meta.interface';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
@@ -12,17 +13,19 @@ import { GenericDialogComponent } from '../../../../shared/components/generic-di
 import { GenericPaginationComponent } from '../../../../shared/components/generic-pagination/generic-pagination.component';
 import { GenericSearchComponent } from '../../../../shared/components/generic-search/generic-search.component';
 import { GenericSwitchComponent } from '../../../../shared/components/generic-switch/generic-switch.component';
+import { GenericLoadingComponent } from '../../../../shared/components/generic-loading/generic-loading.component';
 
 @Component({
   selector: 'app-board',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericPaginationComponent, GenericSearchComponent, GenericSwitchComponent],
+  imports: [FormsModule, RouterLink, DatePipe, GenericButtonComponent, GenericDialogComponent, GenericPaginationComponent, GenericSearchComponent, GenericSwitchComponent, GenericLoadingComponent],
   templateUrl: './board.component.html',
 })
 export class BoardComponent implements OnInit {
   private projectsApi = inject(ProjectService);
   private alert = inject(AlertService);
   private filter = inject(FilterService);
+  auth = inject(AuthService);
 
   projects = signal<Project[]>([]);
   pagination = signal<PaginationMeta | null>(null);
@@ -89,10 +92,15 @@ export class BoardComponent implements OnInit {
   }
 
   saveProject(): void {
+    const creating = !this.editingProject();
     const obs = this.editingProject()
       ? this.projectsApi.update(this.editingProject()!._id, this.formData)
       : this.projectsApi.create(this.formData);
-    obs.subscribe({ next: () => { this.loadProjects(); this.closeDialog(); } });
+    obs.subscribe({ next: () => {
+      if (creating) this.auth.getProfile().subscribe();
+      this.loadProjects();
+      this.closeDialog();
+    } });
   }
 
   confirmDelete(project: Project): void {

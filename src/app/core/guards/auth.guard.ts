@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { catchError, map, of } from 'rxjs';
 
 export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
@@ -9,9 +10,11 @@ export const authGuard: CanActivateFn = () => {
   if (authService.isLoggedIn()) {
     return true;
   }
-
-  router.navigate(['/auth/login']);
-  return false;
+  if (!authService.getToken()) return router.createUrlTree(['/auth/login']);
+  return authService.getProfile().pipe(
+    map(() => true),
+    catchError(() => of(router.createUrlTree(['/auth/login']))),
+  );
 };
 
 export const guestGuard: CanActivateFn = () => {
@@ -19,8 +22,7 @@ export const guestGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (authService.isLoggedIn()) {
-    router.navigate(['/board']);
-    return false;
+    return router.createUrlTree(['/board']);
   }
 
   return true;

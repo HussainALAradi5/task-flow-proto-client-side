@@ -1,27 +1,26 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
+import { AuthService } from './core/services/auth.service';
+import { ThemeService } from './core/services/theme.service';
 
 describe('App', () => {
-  beforeEach(async () => {
+  it('shows the signed-in navigation and profile', async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideHttpClient(), provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: { isLoggedIn: signal(true), currentUser: signal({ userName: 'demo_leader' }), logout: () => {} } },
+        { provide: ThemeService, useValue: { theme: signal('light'), toggle: () => {} } },
+      ],
     }).compileComponents();
-  });
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it('should render the application shell', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('app-header')).toBeTruthy();
-    expect(compiled.querySelector('router-outlet')).toBeTruthy();
+    const text = (fixture.nativeElement as HTMLElement).textContent || '';
+    expect(text).toContain('demo_leader');
+    expect(text).toContain('Projects');
+    expect(text).toContain('Teams');
   });
 });
