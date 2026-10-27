@@ -9,7 +9,7 @@ import { GenericButtonComponent } from '../generic-button/generic-button.compone
   imports: [GenericButtonComponent],
   template: `
     @if (alertService.alert$(); as alert) {
-      <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="fixed inset-0 z-[80] flex items-center justify-center p-4" role="alertdialog" aria-modal="true">
         <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" (click)="alertService.dismiss()"></div>
         <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
           <div class="p-6">
