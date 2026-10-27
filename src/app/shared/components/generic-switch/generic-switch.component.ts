@@ -4,7 +4,7 @@ import { Component, input, output, signal } from '@angular/core';
   selector: 'app-generic-switch',
   standalone: true,
   template: `
-    <label class="inline-flex items-center gap-2 cursor-pointer select-none" [class.opacity-50 pointer-events-none]="disabled()">
+    <label class="inline-flex items-center gap-2 cursor-pointer select-none" [class.opacity-50]="disabled()" [class.pointer-events-none]="disabled()">
       <div class="relative">
         <input
           type="checkbox"

@@ -2,6 +2,10 @@
 
 Angular 21 client for a Trello-like project board. Boards contain four task columns (To Do, In Progress, In Review, Done), milestones, comments, progress bars, and an ordered activity history. Desktop users can drag cards between columns. Opening a card also lets users change its status, including on touch devices.
 
+## Live demo
+
+Open the [TaskFlow client](https://taskflow-proto-client.onrender.com) to try the app. Its [API](https://taskflow-proto-api.onrender.com/) runs on a free Render web service, so the first request after inactivity may take about a minute. Sign in with one of the [demo users](#demo-users) and the demo password provided privately by the project owner. Do not publish the Admin password in this repository. The live demo uses a dedicated free MongoDB Atlas cluster.
+
 ## Start locally (PowerShell)
 
 Keep the [client](https://github.com/HussainALAradi5/task-flow-proto-client-side), [server](https://github.com/HussainALAradi5/task-flow-proto-server-side), and [documentation](https://github.com/HussainALAradi5/task-flow-proto-documenation) repositories side by side. Use Node.js 24 LTS and a reachable MongoDB database.
