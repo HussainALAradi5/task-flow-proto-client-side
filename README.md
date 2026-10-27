@@ -50,7 +50,7 @@ The progress bar shared component displays board and milestone completion. The s
 
 ## Screenshots
 
-All screenshots below come from the real client and API with an isolated temporary MongoDB database and the demo seed. The Admin, Leader, and Member each signed in. The Member moved and commented on an Admin-created card; the board's ordered history recorded both actions. The configured deployment database was not used.
+The original role gallery below comes from the real client and API with an isolated temporary MongoDB database and the demo seed. The Admin, Leader, and Member each signed in. The Member moved and commented on an Admin-created card; the board's ordered history recorded both actions. The invitation and discussion screenshots were captured from the deployed free demo.
 
 ### Sign in and Admin
 
@@ -64,6 +64,8 @@ All screenshots below come from the real client and API with an isolated tempora
 ![Leader teams](screenshots/leader-teams.png)
 ![Leader Kanban board with progress and milestones](screenshots/leader-board.png)
 ![Leader task details](screenshots/leader-task-details.png)
+![Leader invitation form on the deployed demo](screenshots/leader-invite-live.png)
+![Leader card discussion on the deployed demo](screenshots/leader-discussion-live.png)
 ![Board activity history](screenshots/leader-activity.png)
 ![Leader dark mode](screenshots/leader-dark-mode.png)
 ![Leader mobile projects](screenshots/leader-mobile.png)
