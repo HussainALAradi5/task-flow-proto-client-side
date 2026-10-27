@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://taskflow-api.onrender.com/api',
+  apiUrl: 'https://taskflow-proto-api.onrender.com/api',
 };

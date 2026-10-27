@@ -44,25 +44,30 @@ The progress bar shared component displays board and milestone completion. The s
 
 ## Screenshots
 
-The first gallery uses mocked API responses representing the demo seed to show the main screens at desktop and mobile widths. The final three images come from a real client and API running against an isolated temporary MongoDB instance. That live run seeded twice, logged in as all three roles, moved and commented on an Admin-created card as the Member, and loaded board activity. The configured deployment database was not used.
+All screenshots below come from the real client and API with an isolated temporary MongoDB database and the demo seed. The Admin, Leader, and Member each signed in. The Member moved and commented on an Admin-created card; the board's ordered history recorded both actions. The configured deployment database was not used.
+
+### Sign in and Admin
 
 ![Login](screenshots/login.png)
-![Projects dashboard](screenshots/projects-dashboard.png)
-![Kanban board](screenshots/kanban-board.png)
-![Card moved between columns](screenshots/kanban-card-moved.png)
-![Activity history](screenshots/activity-history.png)
-![Task details](screenshots/task-details.png)
-![Dark mode](screenshots/dark-mode.png)
-![Teams](screenshots/teams.png)
-![Mobile projects](screenshots/projects-mobile.png)
-![Member group and board](screenshots/member-group.png)
-![Member commenting on a shared board](screenshots/member-board.png)
+![Admin projects, including all four demo boards](screenshots/admin-dashboard.png)
+![Admin teams](screenshots/admin-teams.png)
 
-### Live demo flow
+### Leader
 
-![Live Member board after moving a card](screenshots/live-member-board.png)
-![Live Member comment](screenshots/live-member-comments.png)
-![Live board activity history](screenshots/live-activity-history.png)
+![Leader projects](screenshots/leader-dashboard.png)
+![Leader teams](screenshots/leader-teams.png)
+![Leader Kanban board with progress and milestones](screenshots/leader-board.png)
+![Leader task details](screenshots/leader-task-details.png)
+![Board activity history](screenshots/leader-activity.png)
+![Leader dark mode](screenshots/leader-dark-mode.png)
+![Leader mobile projects](screenshots/leader-mobile.png)
+
+### Member in another group
+
+![Member projects](screenshots/member-dashboard.png)
+![Member's Operations Group](screenshots/member-teams.png)
+![Member's shared board after moving the Admin's card](screenshots/member-board.png)
+![Member comment on the shared card](screenshots/member-comments.png)
 
 ## Checks
 
