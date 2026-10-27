@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { AlertService } from '../../../../core/services/alert.service';
-import { TeamService } from '../../services/team';
+import { TeamService, TeamInvitation } from '../../services/team';
 import { Team } from '../../../../core/interfaces/team.interface';
 import { PaginationMeta } from '../../../../core/interfaces/pagination-meta.interface';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -32,6 +32,21 @@ import { GenericLoadingComponent } from '../../../../shared/components/generic-l
         }
       </div>
 
+      @if (invitations().length) {
+        <section class="mb-8 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-5" aria-label="Team invitations">
+          <h2 class="font-semibold text-gray-900 dark:text-white mb-1">Your invitations ({{ invitations().length }})</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">Accept to join the team and its boards, or decline.</p>
+          @for (invitation of invitations(); track invitation._id) {
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 border-t border-blue-200 dark:border-blue-800">
+              <div><p class="font-medium text-gray-900 dark:text-white">{{ invitation.teamId.name }}</p><p class="text-sm text-gray-600 dark:text-gray-300">Invited by {{ invitation.invitedBy.userName }}</p></div>
+              <div class="flex gap-2">
+                <button type="button" (click)="respond(invitation, 'decline')" class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200">Decline</button>
+                <button type="button" (click)="respond(invitation, 'accept')" class="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Accept</button>
+              </div>
+            </div>
+          }
+        </section>
+      }
       @if (loading()) {
         <app-generic-loading label="Loading teams" />
       } @else {
@@ -58,6 +73,15 @@ import { GenericLoadingComponent } from '../../../../shared/components/generic-l
                 </div>
               </div>
               <p class="text-gray-500 dark:text-gray-400 text-sm line-clamp-2">{{ team.description || 'No description' }}</p>
+              <div class="mt-4">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Members ({{ team.members?.length || 0 }})</span>
+                  @if (canManage(team)) {
+                    <button type="button" (click)="openMembers(team)" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">Manage</button>
+                  }
+                </div>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300 truncate">{{ memberNames(team) }}</p>
+              </div>
               <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <span class="text-xs text-gray-400">Created {{ team.createdAt | date:'mediumDate' }}</span>
               </div>
@@ -111,6 +135,27 @@ import { GenericLoadingComponent } from '../../../../shared/components/generic-l
         </div>
       </div>
     </app-generic-dialog>
+    <app-generic-dialog [isOpen]="showMembers()" [title]="'Members · ' + (selectedTeam()?.name || '')" confirmText="Done" (onClose)="closeMembers()" (onConfirm)="closeMembers()">
+      <div class="space-y-5">
+        <p class="text-sm text-gray-600 dark:text-gray-300">Invite someone with an existing TaskFlow account. They can accept or decline before joining the team and its boards.</p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input type="email" [(ngModel)]="memberEmail" (keydown.enter)="addMember()" placeholder="Member email address" aria-label="Member email address" class="min-w-0 flex-1 px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+          <app-generic-button (onClick)="addMember()">Send invite</app-generic-button>
+        </div>
+        @if (memberError()) { <p role="alert" class="text-sm text-red-600 dark:text-red-400">{{ memberError() }}</p> }
+        <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+          @for (member of selectedTeam()?.members || []; track memberId(member)) {
+            <li class="flex items-center justify-between gap-3 py-3">
+              <div class="min-w-0">
+                <p class="font-medium text-gray-900 dark:text-white truncate">{{ memberName(member) }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ memberEmailOf(member) }}</p>
+              </div>
+              <button type="button" (click)="removeMember(member)" class="text-sm text-red-600 dark:text-red-400 hover:underline" [attr.aria-label]="'Remove ' + memberName(member)">Remove</button>
+            </li>
+          } @empty { <li class="py-5 text-sm text-gray-500 dark:text-gray-400">No members yet.</li> }
+        </ul>
+      </div>
+    </app-generic-dialog>
   `,
 })
 export class TeamComponent implements OnInit {
@@ -119,14 +164,62 @@ export class TeamComponent implements OnInit {
   auth = inject(AuthService);
 
   teams = signal<Team[]>([]);
+  invitations = signal<TeamInvitation[]>([]);
   pagination = signal<PaginationMeta | null>(null);
   loading = signal(true);
   showDialog = signal(false);
   editingTeam = signal<Team | null>(null);
   formData = { name: '', description: '' };
+  showMembers = signal(false);
+  selectedTeam = signal<Team | null>(null);
+  memberEmail = '';
+  memberError = signal('');
+
+  private userId(value?: string | Record<string, unknown>): string | undefined {
+    return typeof value === 'string' ? value : value?.['_id'] as string | undefined;
+  }
+
+  canManage(team: Team): boolean {
+    return this.auth.isAdmin() || (this.auth.isLeader() && this.userId(team.createdBy) === this.auth.currentUser()?._id);
+  }
+
+  memberId(member: string | { _id: string }): string { return typeof member === 'string' ? member : member._id; }
+  memberName(member: string | { _id: string; userName: string }): string { return typeof member === 'string' ? member : member.userName; }
+  memberEmailOf(member: string | { _id: string; email: string }): string { return typeof member === 'string' ? '' : member.email; }
+  memberNames(team: Team): string { return team.members?.length ? team.members.map((member) => this.memberName(member)).join(', ') : 'Only the team owner'; }
+
+  openMembers(team: Team): void { this.selectedTeam.set(team); this.memberEmail = ''; this.memberError.set(''); this.showMembers.set(true); }
+  closeMembers(): void { this.showMembers.set(false); this.selectedTeam.set(null); }
+  addMember(): void {
+    const team = this.selectedTeam();
+    if (!team) return;
+    const email = this.memberEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { this.memberError.set('Enter a valid email address.'); return; }
+    this.memberError.set('');
+    this.teamsApi.addMember(team._id, email).subscribe({
+      next: () => { this.memberEmail = ''; this.memberError.set('Invitation sent. They will appear here after accepting.'); },
+      error: (error) => this.memberError.set(error.error?.message || 'Could not add member'),
+    });
+  }
+  removeMember(member: string | { _id: string; userName: string }): void {
+    const team = this.selectedTeam();
+    if (!team) return;
+    this.alert.confirm(`Remove ${this.memberName(member)} from ${team.name} and its boards?`, () => {
+      this.teamsApi.removeMember(team._id, this.memberId(member)).subscribe({
+        next: (response) => { this.selectedTeam.set(response.data); this.loadTeams(1); },
+        error: (error) => this.memberError.set(error.error?.message || 'Could not remove member'),
+      });
+    }, 'Remove member');
+  }
 
   ngOnInit(): void {
     this.loadTeams(1);
+    this.loadInvitations();
+  }
+
+  loadInvitations(): void { this.teamsApi.pendingInvitations().subscribe({ next: (res) => this.invitations.set(res.data) }); }
+  respond(invitation: TeamInvitation, decision: 'accept' | 'decline'): void {
+    this.teamsApi.respondToInvitation(invitation._id, decision).subscribe({ next: () => { this.loadInvitations(); this.loadTeams(1); } });
   }
 
   loadTeams(page: number): void {

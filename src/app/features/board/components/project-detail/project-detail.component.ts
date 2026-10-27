@@ -105,6 +105,10 @@ export class ProjectDetailComponent implements OnInit {
   sortBy = signal<string>('newest');
   showDeleted = signal(false);
   newComment = '';
+  commentAttachment = signal('');
+  commentError = signal('');
+  taskDateError = signal('');
+  today = new Date().toISOString().slice(0, 10);
 
   taskForm: TaskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '', startDate: '', targetDate: '', endDate: '', deliveredDate: '' };
   milestoneForm = { name: '' };
@@ -149,7 +153,7 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   loadComments(taskId: string): void {
-    this.api.getAllPages<Comment>(`comments/task/${taskId}`).subscribe({ next: (comments) => this.comments.set(comments) });
+    this.api.getAllPages<Comment>(`comments/task/${taskId}`).subscribe({ next: (comments) => this.comments.set([...comments].sort((a, b) => a.createdAt.localeCompare(b.createdAt))) });
   }
 
   loadHistory(reset = true): void {
@@ -187,6 +191,8 @@ export class ProjectDetailComponent implements OnInit {
     const current = this.authService.currentUser();
     return !!current && (current.role === 'Admin' || this.recordUserId(comment.createdBy) === current._id);
   }
+
+  isMyComment(comment: Comment): boolean { return this.recordUserId(comment.createdBy) === this.authService.currentUser()?._id; }
 
   private recordUserId(user?: string | Record<string, unknown>): string | undefined {
     return typeof user === 'string' ? user : user?.['_id'] as string | undefined;
@@ -339,12 +345,14 @@ export class ProjectDetailComponent implements OnInit {
 
   openCreateTask(): void {
     this.editingTask.set(null);
+    this.taskDateError.set('');
     this.taskForm = { title: '', description: '', status: TaskStatus.TODO, priority: TaskPriority.MEDIUM, milestoneId: '', startDate: '', targetDate: '', endDate: '', deliveredDate: '' };
     this.showTaskDialog.set(true);
   }
 
   openEditTask(task: Task): void {
     this.editingTask.set(task);
+    this.taskDateError.set('');
     this.taskForm = {
       title: task.title,
       description: task.description || '',
@@ -362,6 +370,16 @@ export class ProjectDetailComponent implements OnInit {
   closeTaskDialog(): void { this.showTaskDialog.set(false); this.editingTask.set(null); }
 
   saveTask(): void {
+    const creationDay = this.editingTask()?.createdAt?.slice(0, 10) || new Date().toISOString().slice(0, 10);
+    let previous = creationDay;
+    let previousName = 'task creation';
+    for (const [label, date] of [['Start', this.taskForm.startDate], ['Target', this.taskForm.targetDate], ['End', this.taskForm.endDate], ['Delivery', this.taskForm.deliveredDate]]) {
+      if (!date) continue;
+      if (date < previous) { this.taskDateError.set(`${label} date cannot be before ${previousName} date.`); return; }
+      previous = date;
+      previousName = label.toLowerCase();
+    }
+    this.taskDateError.set('');
     const data = {
       ...this.taskForm,
       projectId: this.projectId,
@@ -374,7 +392,7 @@ export class ProjectDetailComponent implements OnInit {
     const obs = this.editingTask()
       ? this.tasksApi.update(this.editingTask()!._id, data)
       : this.tasksApi.create(data);
-    obs.subscribe({ next: () => { this.loadTasks(); this.loadHistory(); this.closeTaskDialog(); } });
+    obs.subscribe({ next: () => { this.loadTasks(); this.loadHistory(); this.closeTaskDialog(); }, error: (error) => this.taskDateError.set(error.error?.message || 'Could not save task') });
   }
 
   confirmDeleteTask(task: Task): void {
@@ -393,12 +411,30 @@ export class ProjectDetailComponent implements OnInit {
     this.showCommentsPanel.set(false);
     this.selectedTask.set(null);
     this.newComment = '';
+    this.commentAttachment.set('');
+    this.commentError.set('');
+  }
+
+  onCommentAttachment(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type) || file.size > 500_000) {
+      this.commentError.set('Use a PNG, JPEG, GIF, or WebP image up to 500 KB.'); return;
+    }
+    this.commentError.set('');
+    const reader = new FileReader();
+    reader.onload = () => this.commentAttachment.set(String(reader.result));
+    reader.onerror = () => this.commentError.set('Could not read this image.');
+    reader.readAsDataURL(file);
   }
 
   addComment(): void {
-    if (!this.newComment.trim() || !this.selectedTask()) return;
-    this.commentsApi.create({ content: this.newComment, taskId: this.selectedTask()!._id }).subscribe({
-      next: () => { this.loadComments(this.selectedTask()!._id); this.loadHistory(); this.newComment = ''; },
+    if ((!this.newComment.trim() && !this.commentAttachment()) || !this.selectedTask()) return;
+    this.commentsApi.create({ content: this.newComment.trim(), attachment: this.commentAttachment() || undefined, taskId: this.selectedTask()!._id }).subscribe({
+      next: () => { this.loadComments(this.selectedTask()!._id); this.loadHistory(); this.newComment = ''; this.commentAttachment.set(''); this.commentError.set(''); },
+      error: (error) => this.commentError.set(error.error?.message || 'Could not send comment'),
     });
   }
 

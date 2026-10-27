@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { TeamService } from '../../features/team/services/team';
 
 @Component({
   selector: 'app-header',
@@ -15,12 +16,13 @@ import { ThemeService } from '../../core/services/theme.service';
             <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span class="text-white font-bold text-sm">TF</span>
             </div>
-            <span class="text-xl font-bold text-gray-900 dark:text-white">TaskFlow</span>
+            <span class="hidden sm:inline text-xl font-bold text-gray-900 dark:text-white">TaskFlow</span>
           </a>
 
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2 sm:gap-4">
             <button
               (click)="themeService.toggle()"
+              aria-label="Toggle color theme"
               class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               @if (themeService.theme() === 'light') {
@@ -35,6 +37,7 @@ import { ThemeService } from '../../core/services/theme.service';
             </button>
 
             @if (authService.isLoggedIn()) {
+              <a routerLink="/teams" class="px-2 py-1.5 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30">Teams @if (teams.pendingCount()) { <span class="ml-1 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white" [attr.aria-label]="teams.pendingCount() + ' pending invitations'">{{ teams.pendingCount() }}</span> }</a>
               <a routerLink="/profile" class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
                   <span class="text-blue-600 dark:text-blue-400 font-medium text-xs">{{ authService.currentUser()?.userName?.charAt(0)?.toUpperCase() }}</span>
@@ -43,7 +46,7 @@ import { ThemeService } from '../../core/services/theme.service';
               </a>
               <button
                 (click)="authService.logout()"
-                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                class="px-2 sm:px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 Logout
               </button>
@@ -64,4 +67,12 @@ import { ThemeService } from '../../core/services/theme.service';
 export class HeaderComponent {
   authService = inject(AuthService);
   themeService = inject(ThemeService);
+  teams = inject(TeamService);
+
+  constructor() {
+    effect(() => {
+      if (this.authService.currentUser()) this.teams.pendingInvitations().subscribe({ error: () => this.teams.pendingCount.set(0) });
+      else this.teams.pendingCount.set(0);
+    });
+  }
 }

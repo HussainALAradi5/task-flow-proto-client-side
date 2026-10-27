@@ -1,6 +1,6 @@
 # TaskFlow client
 
-Angular 21 client for a Trello-like project board. Boards contain four task columns (To Do, In Progress, In Review, Done), milestones, comments, progress bars, and an ordered activity history. Desktop users can drag cards between columns. Opening a card also lets users change its status, including on touch devices.
+Angular 21 client for a Trello-inspired project board. Boards contain four task columns (To Do, In Progress, In Review, Done), milestones, card discussions with small images/GIFs, progress bars, and an ordered activity history. Desktop users can drag cards between columns. Opening a card also lets users change its status, including on touch devices.
 
 ## Live demo
 
@@ -39,6 +39,8 @@ The login form also accepts `demo_admin`, `demo_leader`, or `demo_member` as the
 ## Board behavior and access
 
 Project boards and team lists are scoped to ownership or explicit membership. Members can read their board's milestones and activity, and create, move, edit, and comment on cards there. Leaders or Admins manage milestones; board and team edits require the owner or Admin. The server enforces these rules. Each board shows recent activity in reverse time order and can load older events. Actions write history on the server; clients cannot create audit events directly.
+
+Team owners can invite a registered user by email from **Teams → Manage**. The recipient sees an invitation count in the header and accepts or declines in Teams. Acceptance grants access to the team and its active boards. Task start, target, end, and delivery dates must be chronological and cannot precede card creation. Card discussion supports text and one PNG, JPEG, GIF, or WebP image up to 500 KB per comment. See the [workflow review](https://github.com/HussainALAradi5/task-flow-proto-documenation/blob/main/trello-workflow-review.md) for feature scope and limits.
 
 The progress bar shared component displays board and milestone completion. The shared UI library also includes button, card, dialog, loading, search, select, badge select, badge, switch, pagination, input, password input, alert, toast, table, file upload, drag drop, and access control components. `generic-progress-bar` accepts `label`, a 0–100 `value`, `size`, and `tone`:
 

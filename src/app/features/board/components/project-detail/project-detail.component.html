@@ -293,21 +293,22 @@
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="block text-[11px] text-gray-400 mb-1">Start</label>
-          <input type="date" [(ngModel)]="taskForm.startDate" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+          <input type="date" [(ngModel)]="taskForm.startDate" [min]="editingTask()?.createdAt?.slice(0, 10) || today" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
         </div>
         <div>
           <label class="block text-[11px] text-gray-400 mb-1">Target</label>
-          <input type="date" [(ngModel)]="taskForm.targetDate" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+          <input type="date" [(ngModel)]="taskForm.targetDate" [min]="taskForm.startDate || editingTask()?.createdAt?.slice(0, 10) || today" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
         </div>
         <div>
           <label class="block text-[11px] text-gray-400 mb-1">End</label>
-          <input type="date" [(ngModel)]="taskForm.endDate" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+          <input type="date" [(ngModel)]="taskForm.endDate" [min]="taskForm.targetDate || taskForm.startDate || editingTask()?.createdAt?.slice(0, 10) || today" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
         </div>
         <div>
           <label class="block text-[11px] text-gray-400 mb-1">Delivered</label>
-          <input type="date" [(ngModel)]="taskForm.deliveredDate" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
+          <input type="date" [(ngModel)]="taskForm.deliveredDate" [min]="taskForm.endDate || taskForm.targetDate || taskForm.startDate || editingTask()?.createdAt?.slice(0, 10) || today" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" />
         </div>
       </div>
+      @if (taskDateError()) { <p role="alert" class="mt-2 text-sm text-red-600 dark:text-red-400">{{ taskDateError() }}</p> }
     </div>
     @if (editingTask()) {
       <div class="pt-4 border-t border-gray-200 dark:border-gray-600 space-y-2">
@@ -353,16 +354,16 @@
     <div class="relative w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl flex flex-col border-l border-gray-200 dark:border-gray-700">
       <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
         <div>
-          <h3 class="font-semibold text-gray-900 dark:text-white">Comments</h3>
-          <p class="text-xs text-gray-400 mt-0.5">{{ selectedTask()?.title }}</p>
+          <h3 class="font-semibold text-gray-900 dark:text-white">Task discussion <span class="text-sm font-normal text-gray-500">({{ comments().length }})</span></h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ selectedTask()?.title }}</p>
         </div>
         <button (click)="closeComments()" class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <div class="flex-1 overflow-y-auto p-5 space-y-3">
+      <div class="flex-1 overflow-y-auto p-5 space-y-4" role="log" aria-label="Task discussion" aria-live="polite">
         @for (comment of comments(); track comment._id) {
-          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3.5">
+          <div [class]="isMyComment(comment) ? 'rounded-xl p-3.5 border bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800' : 'rounded-xl p-3.5 border bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'">
             <div class="flex items-center justify-between mb-1.5">
               <div class="flex items-center gap-2">
                 <div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
@@ -375,20 +376,26 @@
                 <button (click)="deleteComment(comment)" class="text-[10px] text-red-400 hover:text-red-600 font-medium">Delete</button>
               }
             </div>
-            <p class="text-sm text-gray-900 dark:text-white leading-relaxed">{{ comment.content }}</p>
+            @if (comment.content) { <p class="text-sm text-gray-900 dark:text-white leading-relaxed whitespace-pre-wrap break-words">{{ comment.content }}</p> }
+            @if (comment.attachment) { <img [src]="comment.attachment" alt="Attached image" class="mt-2 max-h-72 max-w-full rounded-lg object-contain" /> }
           </div>
         } @empty {
           <div class="text-center py-12">
             <svg class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-            <p class="text-sm text-gray-400">No comments yet</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Start the discussion about this task.</p>
           </div>
         }
       </div>
       <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div class="flex gap-2">
-          <input [(ngModel)]="newComment" (keydown.enter)="addComment()" class="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" placeholder="Write a comment..." />
+        @if (commentAttachment()) {
+          <div class="mb-3 flex items-start gap-2"><img [src]="commentAttachment()" alt="Image to send" class="max-h-28 max-w-36 rounded-lg object-contain" /><button type="button" (click)="commentAttachment.set('')" class="text-sm text-red-600 dark:text-red-400">Remove</button></div>
+        }
+        @if (commentError()) { <p role="alert" class="mb-2 text-sm text-red-600 dark:text-red-400">{{ commentError() }}</p> }
+        <div class="flex items-end gap-2">
+          <textarea [(ngModel)]="newComment" rows="2" maxlength="2000" aria-label="Write a comment" class="min-w-0 flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" placeholder="Write a comment..."></textarea>
           <app-generic-button (onClick)="addComment()">Send</app-generic-button>
         </div>
+        <label class="mt-2 inline-flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 cursor-pointer hover:underline">Attach image or GIF<input type="file" accept="image/png,image/jpeg,image/gif,image/webp" (change)="onCommentAttachment($event)" class="sr-only" /></label>
       </div>
     </div>
   </div>

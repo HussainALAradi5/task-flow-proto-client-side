@@ -1,5 +1,6 @@
 export interface CreateCommentRequest {
   content: string;
+  attachment?: string;
   taskId: string;
 }
 
