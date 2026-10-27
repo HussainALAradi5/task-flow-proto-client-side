@@ -44,7 +44,7 @@ The progress bar shared component displays board and milestone completion. The s
 
 ## Screenshots
 
-These screenshots were captured from the Angular client with mocked API responses representing the demo seed. They verify client rendering. A live MongoDB end-to-end run is still needed.
+The first gallery uses mocked API responses representing the demo seed to show the main screens at desktop and mobile widths. The final three images come from a real client and API running against an isolated temporary MongoDB instance. That live run seeded twice, logged in as all three roles, moved and commented on an Admin-created card as the Member, and loaded board activity. The configured deployment database was not used.
 
 ![Login](screenshots/login.png)
 ![Projects dashboard](screenshots/projects-dashboard.png)
@@ -57,6 +57,12 @@ These screenshots were captured from the Angular client with mocked API response
 ![Mobile projects](screenshots/projects-mobile.png)
 ![Member group and board](screenshots/member-group.png)
 ![Member commenting on a shared board](screenshots/member-board.png)
+
+### Live demo flow
+
+![Live Member board after moving a card](screenshots/live-member-board.png)
+![Live Member comment](screenshots/live-member-comments.png)
+![Live board activity history](screenshots/live-activity-history.png)
 
 ## Checks
 
