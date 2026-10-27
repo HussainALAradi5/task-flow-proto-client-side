@@ -1,6 +1,6 @@
 # TaskFlow client
 
-Angular 21 client for a Trello-inspired project board. Boards contain four task columns (To Do, In Progress, In Review, Done), milestones, card discussions with small images/GIFs, progress bars, and an ordered activity history. Desktop users can drag cards between columns. Opening a card also lets users change its status, including on touch devices.
+Angular 21 client for a Trello-inspired project board. Boards contain four task columns (To Do, In Progress, In Review, Done), milestones, card discussions with small images/GIFs, progress bars, and an ordered activity history. Desktop users can drag cards between columns. Opening a card also lets users change its status, including on touch devices. Teams have linked boards and a private chat, and the header bell opens a read/unread notification inbox.
 
 ## Live demo
 
@@ -38,11 +38,11 @@ The login form also accepts `demo_admin`, `demo_leader`, or `demo_member` as the
 
 ## Board behavior and access
 
-Project boards and team lists are scoped to ownership or explicit membership. Members can read their board's milestones and activity, and create, move, edit, and comment on cards there. Leaders or Admins manage milestones; board and team edits require the owner or Admin. The server enforces these rules. Each board shows recent activity in reverse time order and can load older events. Actions write history on the server; clients cannot create audit events directly.
+Project boards and team lists are scoped to ownership or explicit membership. Members can read their board's milestones and activity, and create, move, edit, and comment on cards there. Leaders or Admins manage milestones; only the team creator can edit its details and membership. The server enforces these rules. Each board shows recent activity in reverse time order and can load older events. Actions write history on the server; clients cannot create audit events directly.
 
-Team owners can invite a registered user by email from **Teams → Manage**. The recipient sees an invitation count in the header and accepts or declines in Teams. Acceptance grants access to the team and its active boards. Task start, target, end, and delivery dates must be chronological and cannot precede card creation. Card discussion supports text and one PNG, JPEG, GIF, or WebP image up to 500 KB per comment. See the [workflow review](https://github.com/HussainALAradi5/task-flow-proto-documenation/blob/main/trello-workflow-review.md) for feature scope and limits.
+Team owners can invite a registered user by email from **Teams → Manage**. The recipient sees an invitation count in the header and accepts or declines in Teams. Acceptance grants access to the team and its active boards. Accepted members can open **Team chat** for text and one small image or GIF per message. The Teams page lists linked boards. Projects can be filtered to All, My projects, or Team projects; team and project collections offer grid/list views. The header bell opens **Notifications**, where each user can filter unread items, open their destination, or mark one or all as read. Task start, target, end, and delivery dates must be chronological and cannot precede card creation. Card discussion supports text and one PNG, JPEG, GIF, or WebP image up to 500 KB per comment. See the [workflow review](https://github.com/HussainALAradi5/task-flow-proto-documenation/blob/main/trello-workflow-review.md) for feature scope and limits.
 
-The progress bar shared component displays board and milestone completion. The shared UI library also includes button, card, dialog, loading, search, select, badge select, badge, switch, pagination, input, password input, alert, toast, table, file upload, drag drop, and access control components. `generic-progress-bar` accepts `label`, a 0–100 `value`, `size`, and `tone`:
+The progress bar shared component displays board and milestone completion. The shared UI library also includes button, card, dialog, loading, search, select, badge select, badge, switch, pagination, input, password input, alert, toast, table, file upload, and drag drop components. An unused access control component with fake user suggestions was removed; real team invitations use account email lookup. `generic-progress-bar` accepts `label`, a 0–100 `value`, `size`, and `tone`:
 
 ```html
 <app-generic-progress-bar label="Board completion" [value]="progressPercent()" size="sm" tone="mixed" />

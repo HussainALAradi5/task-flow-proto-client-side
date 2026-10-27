@@ -13,7 +13,7 @@ export class BaseService {
   protected toast = inject(ToastService);
   protected baseUrl = environment.apiUrl;
 
-  getAll<T>(endpoint: string, params?: PaginationParams, search?: string, exactMatch?: boolean, includeInactive?: boolean): Observable<PaginatedResult<T>> {
+  getAll<T>(endpoint: string, params?: PaginationParams, search?: string, exactMatch?: boolean, includeInactive?: boolean, extraParams?: Record<string, string>): Observable<PaginatedResult<T>> {
     let httpParams = new HttpParams();
     if (params) {
       httpParams = httpParams.set('page', params.page.toString()).set('limit', params.limit.toString());
@@ -27,14 +27,15 @@ export class BaseService {
     if (includeInactive) {
       httpParams = httpParams.set('includeInactive', 'true');
     }
+    for (const [key, value] of Object.entries(extraParams || {})) httpParams = httpParams.set(key, value);
     return this.http.get<PaginatedResult<T>>(`${this.baseUrl}/${endpoint}`, { params: httpParams });
   }
 
-  getAllPages<T>(endpoint: string, includeInactive = false): Observable<T[]> {
+  getAllPages<T>(endpoint: string, includeInactive = false, extraParams?: Record<string, string>): Observable<T[]> {
     const limit = 100;
-    return this.getAll<T>(endpoint, { page: 1, limit }, undefined, undefined, includeInactive).pipe(
+    return this.getAll<T>(endpoint, { page: 1, limit }, undefined, undefined, includeInactive, extraParams).pipe(
       expand((response) => response.pagination.page < response.pagination.totalPages
-        ? this.getAll<T>(endpoint, { page: response.pagination.page + 1, limit }, undefined, undefined, includeInactive)
+        ? this.getAll<T>(endpoint, { page: response.pagination.page + 1, limit }, undefined, undefined, includeInactive, extraParams)
         : EMPTY),
       map((response) => response.data),
       reduce((items, page) => [...items, ...page], [] as T[]),

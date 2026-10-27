@@ -7,5 +7,5 @@ export interface CreateProjectRequest {
 export interface UpdateProjectRequest {
   title?: string;
   description?: string;
-  teamId?: string;
+  teamId?: string | null;
 }

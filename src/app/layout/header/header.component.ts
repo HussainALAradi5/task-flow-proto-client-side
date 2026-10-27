@@ -1,8 +1,9 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, effect, inject, OnDestroy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { TeamService } from '../../features/team/services/team';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-header',
@@ -37,6 +38,10 @@ import { TeamService } from '../../features/team/services/team';
             </button>
 
             @if (authService.isLoggedIn()) {
+              <a routerLink="/notifications" aria-label="Notifications" class="relative rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 01-6 0m6 0H9" /></svg>
+                @if (notifications.unreadCount()) { <span class="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-600 px-1 text-center text-xs text-white" [attr.aria-label]="notifications.unreadCount() + ' unread notifications'">{{ notifications.unreadCount() > 99 ? '99+' : notifications.unreadCount() }}</span> }
+              </a>
               <a routerLink="/teams" class="px-2 py-1.5 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30">Teams @if (teams.pendingCount()) { <span class="ml-1 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white" [attr.aria-label]="teams.pendingCount() + ' pending invitations'">{{ teams.pendingCount() }}</span> }</a>
               <a routerLink="/profile" class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
@@ -64,15 +69,24 @@ import { TeamService } from '../../features/team/services/team';
     </header>
   `,
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnDestroy {
   authService = inject(AuthService);
   themeService = inject(ThemeService);
   teams = inject(TeamService);
+  notifications = inject(NotificationService);
+  private refreshTimer?: number;
 
   constructor() {
     effect(() => {
-      if (this.authService.currentUser()) this.teams.pendingInvitations().subscribe({ error: () => this.teams.pendingCount.set(0) });
-      else this.teams.pendingCount.set(0);
+      if (this.authService.currentUser()) {
+        this.teams.pendingInvitations().subscribe({ error: () => this.teams.pendingCount.set(0) });
+        this.notifications.refreshCount();
+      } else { this.teams.pendingCount.set(0); this.notifications.unreadCount.set(0); }
     });
+    if (typeof window !== 'undefined') this.refreshTimer = window.setInterval(() => {
+      if (this.authService.currentUser()) this.notifications.refreshCount();
+    }, 30000);
   }
+
+  ngOnDestroy(): void { if (this.refreshTimer) window.clearInterval(this.refreshTimer); }
 }

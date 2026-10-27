@@ -1,3 +1,5 @@
+import { UserRole } from '../enums/user-role.enum';
+
 export interface SignupRequest {
   userName: string;
   email: string;
@@ -17,5 +19,5 @@ export interface UpdateProfileRequest {
 }
 
 export interface UpdateRoleRequest {
-  role: 'Admin' | 'Leader' | 'Member';
+  role: UserRole;
 }
