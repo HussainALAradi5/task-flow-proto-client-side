@@ -56,7 +56,7 @@ The role gallery below comes from the real client and API. The original board an
 
 ### Sign in and Admin
 
-![Login](screenshots/login.png)
+![Email-first login](screenshots/login-email.jpg)
 ![Admin projects, including all four demo boards](screenshots/admin-dashboard.png)
 ![Admin teams](screenshots/admin-teams.png)
 
@@ -76,6 +76,8 @@ The role gallery below comes from the real client and API. The original board an
 
 ![Member projects](screenshots/member-dashboard.png)
 ![Member's Operations Group, with team board and no owner actions](screenshots/member-teams-current.jpg)
+![Member's Operations Group in list view, with team-specific role badges](screenshots/member-teams-list.jpg)
+![Member profile with account role explained separately from team roles](screenshots/member-profile-role.jpg)
 ![Member team chat](screenshots/member-team-chat.jpg)
 ![Member's shared board after moving the Admin's card](screenshots/member-board.png)
 ![Member comment on the shared card](screenshots/member-comments.png)
