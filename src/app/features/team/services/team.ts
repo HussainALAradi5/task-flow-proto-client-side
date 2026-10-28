@@ -7,6 +7,7 @@ import { Team as TeamEntity } from '../../../core/interfaces/team.interface';
 import { CreateTeamRequest, UpdateTeamRequest } from '../../../core/dto/team.dto';
 import { TeamInvitation } from '../../../core/interfaces/team-invitation.interface';
 import { TeamMessage } from '../../../core/interfaces/team-message.interface';
+import { SendTeamMessageRequest } from '../../../core/dto/team-message.dto';
 import { InvitationDecision } from '../../../core/enums/invitation-decision.enum';
 
 @Injectable({
@@ -54,7 +55,7 @@ export class TeamService {
     return this.api.getAll<TeamMessage>(`teams/${teamId}/messages`, { page, limit: 50 });
   }
 
-  sendMessage(teamId: string, content: string, attachment?: string): Observable<ApiResponse<TeamMessage>> {
-    return this.api.create<TeamMessage>(`teams/${teamId}/messages`, { content, attachment });
+  sendMessage(teamId: string, body: SendTeamMessageRequest): Observable<ApiResponse<TeamMessage>> {
+    return this.api.create<TeamMessage>(`teams/${teamId}/messages`, body);
   }
 }

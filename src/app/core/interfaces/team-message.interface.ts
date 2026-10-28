@@ -4,5 +4,7 @@ export interface TeamMessage {
   author: { _id: string; userName: string };
   content: string;
   attachment?: string;
+  attachmentName?: string;
+  mentions?: string[];
   createdAt: string;
 }
