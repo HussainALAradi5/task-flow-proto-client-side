@@ -10,9 +10,11 @@
         <div>
           <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ user.userName }}</h2>
           <p class="text-gray-500 dark:text-gray-400">{{ user.email }}</p>
-          <app-generic-badge [variant]="getRoleBadge(user.role)" class="mt-1">{{ user.role }}</app-generic-badge>
+          <app-generic-badge [variant]="getRoleBadge(user.role)" class="mt-1">Account: {{ user.role }}</app-generic-badge>
         </div>
       </div>
+
+      <p class="mb-5 text-sm text-gray-500 dark:text-gray-400">Your account role is separate from each team. You can lead one team and be a member of another.</p>
 
       <div class="space-y-4 mb-6">
         <div class="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
@@ -28,7 +30,7 @@
           <span class="text-sm font-medium text-gray-900 dark:text-white">{{ user.mobileNumber || 'Not set' }}</span>
         </div>
         <div class="flex justify-between py-3 border-b border-gray-100 dark:border-gray-700">
-          <span class="text-sm text-gray-500 dark:text-gray-400">Role</span>
+          <span class="text-sm text-gray-500 dark:text-gray-400">Account role</span>
           <app-generic-badge [variant]="getRoleBadge(user.role)">{{ user.role }}</app-generic-badge>
         </div>
       </div>

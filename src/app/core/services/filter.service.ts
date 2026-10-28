@@ -1,12 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-
-export interface FilterState {
-  search: string;
-  exactMatch: boolean;
-  includeInactive: boolean;
-  page: number;
-  limit: number;
-}
+import { FilterState } from '../interfaces/filter-state.interface';
 
 @Injectable({ providedIn: 'root' })
 export class FilterService {

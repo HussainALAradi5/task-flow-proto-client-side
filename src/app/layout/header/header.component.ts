@@ -4,6 +4,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { TeamService } from '../../features/team/services/team';
 import { NotificationService } from '../../core/services/notification.service';
+import { ThemeMode } from '../../core/enums/ui-control.enum';
 
 @Component({
   selector: 'app-header',
@@ -26,7 +27,7 @@ import { NotificationService } from '../../core/services/notification.service';
               aria-label="Toggle color theme"
               class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
-              @if (themeService.theme() === 'light') {
+              @if (themeService.theme() === ThemeMode.Light) {
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
@@ -70,6 +71,7 @@ import { NotificationService } from '../../core/services/notification.service';
   `,
 })
 export class HeaderComponent implements OnDestroy {
+  readonly ThemeMode = ThemeMode;
   authService = inject(AuthService);
   themeService = inject(ThemeService);
   teams = inject(TeamService);

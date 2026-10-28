@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
 import { GenericPasswordInputComponent } from '../../../../shared/components/generic-password-input/generic-password-input.component';
+import { ButtonType } from '../../../../core/enums/ui-control.enum';
 
 @Component({
   selector: 'app-signup',
@@ -42,7 +43,7 @@ import { GenericPasswordInputComponent } from '../../../../shared/components/gen
                 class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="+1234567890" />
             </div>
-            <app-generic-button type="submit" [loading]="loading()" class="w-full">Create Account</app-generic-button>
+            <app-generic-button [type]="ButtonType.Submit" [loading]="loading()" class="w-full">Create Account</app-generic-button>
           </form>
           <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
             Already have an account? <a routerLink="/auth/login" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">Sign in</a>
@@ -53,6 +54,7 @@ import { GenericPasswordInputComponent } from '../../../../shared/components/gen
   `,
 })
 export class SignupComponent {
+  readonly ButtonType = ButtonType;
   private authService = inject(AuthService);
   private router = inject(Router);
   userName = '';

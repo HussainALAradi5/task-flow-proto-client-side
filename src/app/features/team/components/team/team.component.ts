@@ -17,6 +17,7 @@ import { Project } from '../../../../core/interfaces/project.interface';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ViewMode } from '../../../../core/enums/view-mode.enum';
 import { InvitationDecision } from '../../../../core/enums/invitation-decision.enum';
+import { TeamRole } from '../../../../core/enums/team-role.enum';
 
 @Component({
   selector: 'app-team',
@@ -89,12 +90,17 @@ import { InvitationDecision } from '../../../../core/enums/invitation-decision.e
               <p class="text-gray-500 dark:text-gray-400 text-sm line-clamp-2">{{ team.description || 'No description' }}</p>
               <div class="mt-4">
                 <div class="flex items-center justify-between gap-2">
-                  <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Invited members ({{ team.members?.length || 0 }})</span>
+                  <span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">People ({{ (team.members?.length || 0) + 1 }})</span>
                   @if (canManage(team)) {
                     <button type="button" (click)="openMembers(team)" class="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">Manage</button>
                   }
                 </div>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300 truncate">{{ memberNames(team) }}</p>
+                <ul class="mt-2 space-y-2" [attr.aria-label]="'People in ' + team.name">
+                  <li class="flex min-w-0 items-center justify-between gap-2 text-sm"><span class="min-w-0 truncate text-gray-700 dark:text-gray-200">{{ ownerName(team) }}</span><span class="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">{{ TeamRole.Leader }}</span></li>
+                  @for (member of team.members || []; track memberId(member)) {
+                    <li class="flex min-w-0 items-center justify-between gap-2 text-sm"><span class="min-w-0 truncate text-gray-700 dark:text-gray-200">{{ memberName(member) }}</span><span class="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">{{ TeamRole.Member }}</span></li>
+                  }
+                </ul>
               </div>
               <div class="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
                 <div class="flex items-center justify-between gap-2">
@@ -166,7 +172,8 @@ import { InvitationDecision } from '../../../../core/enums/invitation-decision.e
     @if (chatTeam(); as team) { <app-team-chat [team]="team" (closed)="closeChat()" /> }
     <app-generic-dialog [isOpen]="showMembers()" [title]="'Members · ' + (selectedTeam()?.name || '')" confirmText="Done" (onClose)="closeMembers()" (onConfirm)="closeMembers()">
       <div class="space-y-5">
-        <p class="text-sm text-gray-600 dark:text-gray-300">Invite someone with an existing TaskFlow account. They can accept or decline before joining the team and its boards.</p>
+        <p class="text-sm text-gray-600 dark:text-gray-300">Invite someone with an existing TaskFlow account. They can accept or decline before joining the team and its boards. Team roles are specific to this team.</p>
+        <div class="flex items-center justify-between gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm dark:bg-amber-900/20"><span class="truncate text-gray-800 dark:text-gray-200">{{ ownerName(selectedTeam()) }}</span><span class="shrink-0 font-semibold text-amber-800 dark:text-amber-300">{{ TeamRole.Leader }}</span></div>
         <div class="flex flex-col sm:flex-row gap-2">
           <input type="email" [(ngModel)]="memberEmail" (keydown.enter)="addMember()" placeholder="Member email address" aria-label="Member email address" class="min-w-0 flex-1 px-3 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
           <app-generic-button (onClick)="addMember()">Send invite</app-generic-button>
@@ -176,7 +183,7 @@ import { InvitationDecision } from '../../../../core/enums/invitation-decision.e
           @for (member of selectedTeam()?.members || []; track memberId(member)) {
             <li class="flex items-center justify-between gap-3 py-3">
               <div class="min-w-0">
-                <p class="font-medium text-gray-900 dark:text-white truncate">{{ memberName(member) }}</p>
+                <p class="font-medium text-gray-900 dark:text-white truncate">{{ memberName(member) }} <span class="ml-1 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">{{ TeamRole.Member }}</span></p>
                 <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ memberEmailOf(member) }}</p>
               </div>
               <button type="button" (click)="removeMember(member)" class="text-sm text-red-600 dark:text-red-400 hover:underline" [attr.aria-label]="'Remove ' + memberName(member)">Remove</button>
@@ -190,6 +197,7 @@ import { InvitationDecision } from '../../../../core/enums/invitation-decision.e
 export class TeamComponent implements OnInit {
   readonly ViewMode = ViewMode;
   readonly InvitationDecision = InvitationDecision;
+  readonly TeamRole = TeamRole;
   private teamsApi = inject(TeamService);
   private projectsApi = inject(ProjectService);
   private route = inject(ActivatedRoute);
@@ -236,7 +244,10 @@ export class TeamComponent implements OnInit {
   memberId(member: string | { _id: string }): string { return typeof member === 'string' ? member : member._id; }
   memberName(member: string | { _id: string; userName: string }): string { return typeof member === 'string' ? member : member.userName; }
   memberEmailOf(member: string | { _id: string; email: string }): string { return typeof member === 'string' ? '' : member.email; }
-  memberNames(team: Team): string { return team.members?.length ? team.members.map((member) => this.memberName(member)).join(', ') : 'Only the team owner'; }
+  ownerName(team: Team | null): string {
+    const owner = team?.createdBy;
+    return typeof owner === 'object' && owner?.['userName'] ? String(owner['userName']) : 'Team owner';
+  }
   projectsFor(teamId: string): Project[] { return this.teamProjects().filter((project) => (typeof project.teamId === 'string' ? project.teamId : project.teamId?._id) === teamId); }
   setViewMode(value: ViewMode): void { this.viewMode.set(value); localStorage.setItem('taskflow-team-view', value); }
 

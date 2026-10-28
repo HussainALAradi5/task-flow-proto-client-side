@@ -1,8 +1,5 @@
 import { Component, input, output } from '@angular/core';
-
-export type ButtonVariant = 'solid' | 'outline' | 'ghost' | 'link';
-export type ButtonColor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning';
-export type ButtonSize = 'sm' | 'md' | 'lg';
+import { ButtonColor, ButtonSize, ButtonType, ButtonVariant } from '../../../core/enums/ui-control.enum';
 
 @Component({
   selector: 'app-generic-button',
@@ -27,10 +24,10 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
   `,
 })
 export class GenericButtonComponent {
-  type = input<'button' | 'submit' | 'reset'>('button');
-  variant = input<ButtonVariant>('solid');
-  color = input<ButtonColor>('primary');
-  size = input<ButtonSize>('md');
+  type = input<ButtonType>(ButtonType.Button);
+  variant = input<ButtonVariant>(ButtonVariant.Solid);
+  color = input<ButtonColor>(ButtonColor.Primary);
+  size = input<ButtonSize>(ButtonSize.Medium);
   disabled = input<boolean>(false);
   loading = input<boolean>(false);
   onClick = output<void>();

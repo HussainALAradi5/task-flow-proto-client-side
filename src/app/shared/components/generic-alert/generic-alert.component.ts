@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { AlertService } from '../../../core/services/alert.service';
 import { MessageType } from '../../../core/enums/message.enum';
 import { GenericButtonComponent } from '../generic-button/generic-button.component';
+import { ButtonColor, ButtonVariant } from '../../../core/enums/ui-control.enum';
 
 @Component({
   selector: 'app-alert',
@@ -48,7 +49,7 @@ import { GenericButtonComponent } from '../generic-button/generic-button.compone
           </div>
           <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-700/50">
             @if (alert.cancelText) {
-              <app-generic-button variant="ghost" (onClick)="onCancel()">
+              <app-generic-button [variant]="ButtonVariant.Ghost" (onClick)="onCancel()">
                 {{ alert.cancelText }}
               </app-generic-button>
             }
@@ -66,6 +67,7 @@ import { GenericButtonComponent } from '../generic-button/generic-button.compone
 export class AlertComponent {
   alertService = inject(AlertService);
   MessageType = MessageType;
+  ButtonVariant = ButtonVariant;
 
   getIconClasses(type: MessageType): string {
     const types: Record<string, string> = {
@@ -77,12 +79,12 @@ export class AlertComponent {
     return types[type];
   }
 
-  getButtonColor(type: MessageType): 'success' | 'danger' | 'warning' | 'primary' {
-    const types: Record<string, 'success' | 'danger' | 'warning' | 'primary'> = {
-      [MessageType.SUCCESS]: 'success',
-      [MessageType.ERROR]: 'danger',
-      [MessageType.WARNING]: 'warning',
-      [MessageType.INFO]: 'primary',
+  getButtonColor(type: MessageType): ButtonColor {
+    const types: Record<MessageType, ButtonColor> = {
+      [MessageType.SUCCESS]: ButtonColor.Success,
+      [MessageType.ERROR]: ButtonColor.Danger,
+      [MessageType.WARNING]: ButtonColor.Warning,
+      [MessageType.INFO]: ButtonColor.Primary,
     };
     return types[type];
   }

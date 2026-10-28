@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
 import { GenericPasswordInputComponent } from '../../../../shared/components/generic-password-input/generic-password-input.component';
+import { ButtonType } from '../../../../core/enums/ui-control.enum';
 
 @Component({
   selector: 'app-login',
@@ -12,6 +13,7 @@ import { GenericPasswordInputComponent } from '../../../../shared/components/gen
   templateUrl: './login.component.html',
 })
 export class LoginComponent {
+  readonly ButtonType = ButtonType;
   private authService = inject(AuthService);
   private router = inject(Router);
   identifier = '';

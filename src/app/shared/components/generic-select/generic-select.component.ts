@@ -1,12 +1,6 @@
 import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
-export interface SelectOption {
-  value: string;
-  label: string;
-  color?: string;
-  icon?: string;
-}
+import { SelectOption } from '../../../core/interfaces/select-option.interface';
 
 @Component({
   selector: 'app-generic-select',

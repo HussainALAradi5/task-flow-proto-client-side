@@ -16,7 +16,7 @@
         </div>
         <div class="flex gap-3">
           @if (canManageMilestones()) {
-          <app-generic-button variant="outline" (onClick)="showMilestoneDialog.set(true)">
+          <app-generic-button [variant]="ButtonVariant.Outline" (onClick)="showMilestoneDialog.set(true)">
             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
             Milestone
           </app-generic-button>
@@ -226,7 +226,7 @@
               </div>
               <!-- Progress Bar -->
               <div class="px-5 pb-5">
-                <app-generic-progress-bar [label]="m.name + ' progress'" [value]="getMilestoneProgress(m._id)" size="sm" tone="mixed" />
+                <app-generic-progress-bar [label]="m.name + ' progress'" [value]="getMilestoneProgress(m._id)" [size]="ProgressSize.Small" [tone]="ProgressTone.Mixed" />
               </div>
             </div>
           }

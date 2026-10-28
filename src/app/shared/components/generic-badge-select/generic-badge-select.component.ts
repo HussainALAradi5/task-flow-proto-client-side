@@ -1,11 +1,5 @@
 import { Component, input, output } from '@angular/core';
-
-export interface BadgeOption {
-  value: string;
-  label: string;
-  selectedClass: string;
-  unselectedClass: string;
-}
+import { BadgeOption } from '../../../core/interfaces/badge-option.interface';
 
 @Component({
   selector: 'app-generic-badge-select',

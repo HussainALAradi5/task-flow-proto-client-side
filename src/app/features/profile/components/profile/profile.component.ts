@@ -4,6 +4,8 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
 import { GenericDialogComponent } from '../../../../shared/components/generic-dialog/generic-dialog.component';
 import { GenericBadgeComponent } from '../../../../shared/components/generic-badge/generic-badge.component';
+import { BadgeVariant } from '../../../../core/enums/ui-control.enum';
+import { UserRole } from '../../../../core/enums/user-role.enum';
 
 @Component({
   selector: 'app-profile',
@@ -16,11 +18,13 @@ export class ProfileComponent {
   showEditDialog = signal(false);
   formData = { userName: '', email: '', mobileNumber: '' };
 
-  getRoleBadge(role: string): 'success' | 'warning' | 'danger' | 'info' | 'purple' {
-    const map: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'purple'> = {
-      Admin: 'purple', Leader: 'info', Member: 'success',
+  getRoleBadge(role: UserRole): BadgeVariant {
+    const map: Record<UserRole, BadgeVariant> = {
+      [UserRole.ADMIN]: BadgeVariant.Purple,
+      [UserRole.LEADER]: BadgeVariant.Info,
+      [UserRole.MEMBER]: BadgeVariant.Success,
     };
-    return map[role] || 'info';
+    return map[role];
   }
 
   openEditDialog(): void {

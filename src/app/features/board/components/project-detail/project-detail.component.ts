@@ -14,8 +14,9 @@ import { PaginationMeta } from '../../../../core/interfaces/pagination-meta.inte
 import { ApiService } from '../../../../core/services/api.service';
 import { TaskStatus, TASK_STATUS_OPTIONS } from '../../../../core/enums/task-status.enum';
 import { TaskPriority, TASK_PRIORITY_OPTIONS } from '../../../../core/enums/task-priority.enum';
-import { SelectOption } from '../../../../shared/components/generic-select/generic-select.component';
-import { BadgeOption } from '../../../../shared/components/generic-badge-select/generic-badge-select.component';
+import { SelectOption } from '../../../../core/interfaces/select-option.interface';
+import { BadgeOption } from '../../../../core/interfaces/badge-option.interface';
+import { TaskForm } from '../../../../core/interfaces/task-form.interface';
 import { GenericButtonComponent } from '../../../../shared/components/generic-button/generic-button.component';
 import { GenericDialogComponent } from '../../../../shared/components/generic-dialog/generic-dialog.component';
 import { GenericBadgeComponent } from '../../../../shared/components/generic-badge/generic-badge.component';
@@ -29,18 +30,7 @@ import { MilestoneService } from '../../services/milestone';
 import { CommentService } from '../../services/comment';
 import { GenericProgressBarComponent } from '../../../../shared/components/generic-progress-bar/generic-progress-bar.component';
 import { GenericLoadingComponent } from '../../../../shared/components/generic-loading/generic-loading.component';
-
-interface TaskForm {
-  title: string;
-  description: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  milestoneId: string;
-  startDate: string;
-  targetDate: string;
-  endDate: string;
-  deliveredDate: string;
-}
+import { BadgeVariant, ButtonVariant, ProgressSize, ProgressTone } from '../../../../core/enums/ui-control.enum';
 
 @Component({
   selector: 'app-project-detail',
@@ -49,6 +39,9 @@ interface TaskForm {
   templateUrl: './project-detail.component.html',
 })
 export class ProjectDetailComponent implements OnInit {
+  readonly ButtonVariant = ButtonVariant;
+  readonly ProgressSize = ProgressSize;
+  readonly ProgressTone = ProgressTone;
   private api = inject(ApiService);
   private projectsApi = inject(ProjectService);
   private tasksApi = inject(TaskService);
@@ -303,9 +296,12 @@ export class ProjectDetailComponent implements OnInit {
     return this.milestones().find((m) => m._id === id)?.name || '';
   }
 
-  getPriorityVariant(p: TaskPriority): 'success' | 'warning' | 'danger' | 'info' {
-    const map: Record<TaskPriority, 'success' | 'warning' | 'danger' | 'info'> = {
-      [TaskPriority.LOW]: 'info', [TaskPriority.MEDIUM]: 'success', [TaskPriority.HIGH]: 'warning', [TaskPriority.CRITICAL]: 'danger',
+  getPriorityVariant(p: TaskPriority): BadgeVariant {
+    const map: Record<TaskPriority, BadgeVariant> = {
+      [TaskPriority.LOW]: BadgeVariant.Info,
+      [TaskPriority.MEDIUM]: BadgeVariant.Success,
+      [TaskPriority.HIGH]: BadgeVariant.Warning,
+      [TaskPriority.CRITICAL]: BadgeVariant.Danger,
     };
     return map[p];
   }
