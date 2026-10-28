@@ -50,7 +50,7 @@ The progress bar shared component displays board and milestone completion. The s
 
 ## Screenshots
 
-The original role gallery below comes from the real client and API with an isolated temporary MongoDB database and the demo seed. The Admin, Leader, and Member each signed in. The Member moved and commented on an Admin-created card; the board's ordered history recorded both actions. The invitation and discussion screenshots were captured from the deployed free demo.
+The role gallery below comes from the real client and API. The original board and card flows used an isolated temporary MongoDB database with the demo seed; the latest project, team, chat, and notification views were captured from the deployed free demo. The Member moved and commented on an Admin-created card; the board's ordered history recorded both actions.
 
 ### Sign in and Admin
 
@@ -60,20 +60,21 @@ The original role gallery below comes from the real client and API with an isola
 
 ### Leader
 
-![Leader projects](screenshots/leader-dashboard.png)
+![Leader project grid with team badges and filters](screenshots/leader-projects-grid.jpg)
 ![Leader teams](screenshots/leader-teams.png)
 ![Leader Kanban board with progress and milestones](screenshots/leader-board.png)
 ![Leader task details](screenshots/leader-task-details.png)
 ![Leader invitation form on the deployed demo](screenshots/leader-invite-live.png)
 ![Leader card discussion on the deployed demo](screenshots/leader-discussion-live.png)
 ![Board activity history](screenshots/leader-activity.png)
-![Leader dark mode](screenshots/leader-dark-mode.png)
+![Leader notification inbox with unread state](screenshots/leader-notifications.jpg)
 ![Leader mobile projects](screenshots/leader-mobile.png)
 
 ### Member in another group
 
 ![Member projects](screenshots/member-dashboard.png)
-![Member's Operations Group](screenshots/member-teams.png)
+![Member's Operations Group, with team board and no owner actions](screenshots/member-teams-current.jpg)
+![Member team chat](screenshots/member-team-chat.jpg)
 ![Member's shared board after moving the Admin's card](screenshots/member-board.png)
 ![Member comment on the shared card](screenshots/member-comments.png)
 

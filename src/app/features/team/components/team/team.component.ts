@@ -14,7 +14,7 @@ import { GenericLoadingComponent } from '../../../../shared/components/generic-l
 import { TeamChatComponent } from '../team-chat/team-chat.component';
 import { ProjectService } from '../../../board/services/project';
 import { Project } from '../../../../core/interfaces/project.interface';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ViewMode } from '../../../../core/enums/view-mode.enum';
 import { InvitationDecision } from '../../../../core/enums/invitation-decision.enum';
 
@@ -163,7 +163,7 @@ import { InvitationDecision } from '../../../../core/enums/invitation-decision.e
         </div>
       </div>
     </app-generic-dialog>
-    @if (chatTeam(); as team) { <app-team-chat [team]="team" (closed)="chatTeam.set(null)" /> }
+    @if (chatTeam(); as team) { <app-team-chat [team]="team" (closed)="closeChat()" /> }
     <app-generic-dialog [isOpen]="showMembers()" [title]="'Members · ' + (selectedTeam()?.name || '')" confirmText="Done" (onClose)="closeMembers()" (onConfirm)="closeMembers()">
       <div class="space-y-5">
         <p class="text-sm text-gray-600 dark:text-gray-300">Invite someone with an existing TaskFlow account. They can accept or decline before joining the team and its boards.</p>
@@ -193,6 +193,7 @@ export class TeamComponent implements OnInit {
   private teamsApi = inject(TeamService);
   private projectsApi = inject(ProjectService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private alert = inject(AlertService);
   auth = inject(AuthService);
 
@@ -223,6 +224,13 @@ export class TeamComponent implements OnInit {
   canChat(team: Team): boolean {
     const currentId = this.auth.currentUser()?._id;
     return !!currentId && (this.canManage(team) || !!team.members?.some((member) => this.memberId(member) === currentId));
+  }
+
+  closeChat(): void {
+    this.chatTeam.set(null);
+    if (this.route.snapshot.queryParamMap.has('chat')) {
+      this.router.navigate([], { relativeTo: this.route, queryParams: { chat: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    }
   }
 
   memberId(member: string | { _id: string }): string { return typeof member === 'string' ? member : member._id; }

@@ -105,6 +105,10 @@ export class BoardComponent implements OnInit {
   teamName(project: Project): string { return typeof project.teamId === 'object' ? project.teamId.name : this.teams().find((team) => team._id === project.teamId)?.name || 'Team'; }
   selectedTeamName(): string { return this.teams().find((team) => team._id === this.teamFilter())?.name || 'selected team'; }
   isTeamProject(project: Project): boolean { return !!project.teamId; }
+  canEditProject(project: Project): boolean {
+    const ownerId = typeof project.createdBy === 'string' ? project.createdBy : project.createdBy?.['_id'];
+    return this.auth.isAdmin() || (!!ownerId && ownerId === this.auth.currentUser()?._id);
+  }
 
   openCreateDialog(): void {
     this.editingProject.set(null);

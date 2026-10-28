@@ -94,7 +94,11 @@ export class TeamChatComponent implements OnInit, OnDestroy {
         this.error.set('');
         if (scroll || wasEmpty) this.scrollToBottom();
       },
-      error: () => { this.loading.set(false); this.error.set('Could not load team messages.'); },
+      error: (response) => {
+        this.loading.set(false);
+        if (response.status === 404) { this.messages.set([]); this.error.set('You no longer have access to this team chat.'); }
+        else this.error.set('Could not load team messages.');
+      },
     });
   }
 
